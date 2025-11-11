@@ -349,10 +349,10 @@ const App = {
         
         if (theme === 'dark') {
             body.classList.add('dark-mode');
-              if (themeIcon) themeIcon.textContent = 'Light';
+            if (themeIcon) themeIcon.textContent = '☀️';
         } else {
             body.classList.remove('dark-mode');
-              if (themeIcon) themeIcon.textContent = 'Dark';
+            if (themeIcon) themeIcon.textContent = '🌙';
         }
     },
     

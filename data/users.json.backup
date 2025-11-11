@@ -18,13 +18,13 @@
       "mother_name": "Rooptara"
     },
     "created_at": "2025-11-11T10:00:48Z",
-    "updated_at": "2025-11-11T19:38:08Z",
-    "last_login": "2025-11-11T19:37:51Z",
-    "login_count": 20,
+    "updated_at": "2025-11-11T19:47:42Z",
+    "last_login": "2025-11-11T19:47:27Z",
+    "login_count": 21,
     "failed_login_attempts": 0,
     "account_locked": false,
     "locked_until": null,
-    "theme": "dark",
+    "theme": "light",
     "password_changed": false
   },
   "imran76947": {

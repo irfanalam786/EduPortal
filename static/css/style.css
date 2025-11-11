@@ -144,6 +144,15 @@ body.dark-mode.login-page {
     color: var(--text-secondary);
 }
 
+/* Login page logo */
+.login-logo {
+    height: 80px;
+    width: auto;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
 /* App Container */
 .app-container {
     min-height: 100vh;
@@ -1007,5 +1016,38 @@ body.dark-mode .badge-warning {
 .loading {
     opacity: 0.6;
     pointer-events: none;
+}
+
+/* Login page theme toggle */
+.login-theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 24px;
+    z-index: 100;
+}
+
+.login-theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+body.dark-mode .login-theme-toggle {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+body.dark-mode .login-theme-toggle:hover {
+    background: rgba(0, 0, 0, 0.3);
 }
 
