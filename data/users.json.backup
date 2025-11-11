@@ -18,12 +18,69 @@
       "mother_name": "Rooptara"
     },
     "created_at": "2025-11-11T10:00:48Z",
-    "updated_at": "2025-11-11T11:23:34Z",
-    "last_login": "2025-11-11T11:22:48Z",
-    "login_count": 11,
+    "updated_at": "2025-11-11T19:38:08Z",
+    "last_login": "2025-11-11T19:37:51Z",
+    "login_count": 20,
     "failed_login_attempts": 0,
     "account_locked": false,
     "locked_until": null,
-    "theme": "dark"
+    "theme": "dark",
+    "password_changed": false
+  },
+  "imran76947": {
+    "id": "ACM_20251111183020AIN",
+    "username": "imran76947",
+    "password": "a4a101e4854f884588ee60d141d91bf83be35bebe3e49830b18aedeced2476f8",
+    "role": "Faculty",
+    "registration_id": "REG-20251111183020-DTXH",
+    "status": "active",
+    "profile_completed": true,
+    "profile": {
+      "first_name": "Imran",
+      "last_name": "Alam",
+      "dob": "2004-10-10",
+      "gender": "Male",
+      "marital_status": "Single",
+      "email": "imranalam@edu.ac.in",
+      "father_name": "Shabbir Alam",
+      "mother_name": "Noornisha"
+    },
+    "created_at": "2025-11-11T18:30:20Z",
+    "updated_at": "2025-11-11T19:07:30Z",
+    "created_by": "ADMIN",
+    "last_login": "2025-11-11T19:06:31Z",
+    "login_count": 3,
+    "failed_login_attempts": 0,
+    "account_locked": false,
+    "locked_until": null,
+    "password_changed": false
+  },
+  "meraj04803": {
+    "id": "STU_202511111830366ZR",
+    "username": "meraj04803",
+    "password": "19b9dd3e24fad97f47400340f81e118ca3f88be2ee3503b34b9bde0ad5ad7ebd",
+    "role": "Student",
+    "registration_id": "REG-20251111183036-32CJ",
+    "status": "active",
+    "profile_completed": true,
+    "profile": {
+      "first_name": "Meraj",
+      "last_name": "Alam",
+      "dob": "2004-05-30",
+      "gender": "Male",
+      "marital_status": "Single",
+      "email": "meraj@gmail.com",
+      "father_name": "Alpha",
+      "mother_name": "Beta"
+    },
+    "created_at": "2025-11-11T18:30:36Z",
+    "updated_at": "2025-11-11T18:57:39Z",
+    "created_by": "ADMIN",
+    "last_login": "2025-11-11T18:56:09Z",
+    "login_count": 1,
+    "failed_login_attempts": 0,
+    "account_locked": false,
+    "locked_until": null,
+    "password_changed": false
   }
 }

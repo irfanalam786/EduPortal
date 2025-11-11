@@ -1,1 +1,21 @@
-{}
+{
+  "STU_202511111830366ZR": {
+    "id": "STU_202511111830366ZR",
+    "student_name": "Meraj",
+    "login_id": "meraj04803",
+    "section": "BCA",
+    "first_name": "",
+    "last_name": "",
+    "dob": "",
+    "gender": "",
+    "father_name": "",
+    "mother_name": "",
+    "email": "",
+    "phone": "",
+    "status": "active",
+    "registration_id": "REG-20251111183036-32CJ",
+    "created_at": "2025-11-11T18:30:36Z",
+    "updated_at": "2025-11-11T18:30:36Z",
+    "created_by": "ADMIN"
+  }
+}

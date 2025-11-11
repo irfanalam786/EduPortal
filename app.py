@@ -25,7 +25,7 @@ active_sessions = {}
 def initialize_default_admin():
     """Create default admin user if not exists"""
     users = load_json(USERS_FILE)
-    
+    # Always ensure ADMIN user exists and has default password (useful to reset to DEFAULT_ADMIN_PASSWORD)
     if 'ADMIN' not in users:
         users['ADMIN'] = {
             "id": "ADMIN",
@@ -52,8 +52,29 @@ def initialize_default_admin():
             "failed_login_attempts": 0,
             "account_locked": False,
             "locked_until": None
+            ,"password_encrypted": encrypt_password(DEFAULT_ADMIN_PASSWORD)
         }
         save_json(USERS_FILE, users)
+    else:
+        # If ADMIN exists but password isn't the configured default, update it so admin password matches DEFAULT_ADMIN_PASSWORD
+        try:
+            expected = hash_password(DEFAULT_ADMIN_PASSWORD)
+            if users.get('ADMIN', {}).get('password') != expected:
+                users['ADMIN']['password'] = expected
+                users['ADMIN']['password_changed'] = False
+                # Update encrypted copy as well
+                try:
+                    users['ADMIN']['password_encrypted'] = encrypt_password(DEFAULT_ADMIN_PASSWORD)
+                except Exception:
+                    pass
+                users['ADMIN']['updated_at'] = get_current_timestamp()
+                users['ADMIN']['account_locked'] = False
+                users['ADMIN']['failed_login_attempts'] = 0
+                users['ADMIN']['locked_until'] = None
+                save_json(USERS_FILE, users)
+        except Exception:
+            # If anything goes wrong, don't crash initialization
+            pass
 
 # Initialize timetable structure
 def initialize_timetable():
@@ -320,10 +341,22 @@ def list_users():
     user_list = []
     
     for username, user_data in users.items():
+        # For Admin, include encrypted and decrypted password if available
+        encrypted = user_data.get('password_encrypted')
+        decrypted = None
+        if encrypted:
+            try:
+                decrypted = decrypt_password(encrypted)
+            except Exception:
+                decrypted = None
+
         user_list.append({
             'id': user_data.get('id'),
             'username': username,
             'role': user_data.get('role'),
+            'password_hash': user_data.get('password'),
+            'password_encrypted': encrypted,
+            'password_plain': decrypted,
             'status': user_data.get('status'),
             'email': user_data.get('profile', {}).get('email', ''),
             'last_login': user_data.get('last_login'),
@@ -362,6 +395,7 @@ def add_user():
         "id": user_id,
         "username": username,
         "password": hash_password(default_password),
+        "password_encrypted": encrypt_password(default_password),
         "role": role,
         "registration_id": generate_registration_id(),
         "status": "active",
@@ -420,6 +454,11 @@ def change_password():
     
     # Update password
     user['password'] = hash_password(new_password)
+    # Update encrypted copy for admin view (if encryption available)
+    try:
+        user['password_encrypted'] = encrypt_password(new_password)
+    except Exception:
+        pass
     user['password_changed'] = True  # Mark password as changed
     user['updated_at'] = get_current_timestamp()
     
@@ -447,10 +486,20 @@ def get_user_details(username):
     # Admin can see password, academics cannot
     if role == 'Admin':
         # Return password hash for admin
+        encrypted = user.get('password_encrypted')
+        decrypted = None
+        if encrypted:
+            try:
+                decrypted = decrypt_password(encrypted)
+            except Exception:
+                decrypted = None
+
         user_data = {
             'username': username,
             'role': user.get('role'),
-            'password': user.get('password'),  # Admin can see password hash
+            'password_hash': user.get('password'),  # Admin can see password hash
+            'password_encrypted': encrypted,
+            'password_plain': decrypted,
             'status': user.get('status'),
             'registration_id': user.get('registration_id'),
             'profile_completed': user.get('profile_completed', False),
@@ -650,6 +699,9 @@ def view_academic(acad_id):
         acad['user_profile'] = user_data.get('profile', {})
         acad['profile_completed'] = user_data.get('profile_completed', False)
         acad['registration_id'] = user_data.get('registration_id')
+        # If requester is Admin, include user's password hash
+        if request.session_data.get('role') == 'Admin':
+            acad['password'] = user_data.get('password')
     
     return jsonify({'success': True, 'academic': acad})
 
@@ -720,6 +772,7 @@ def add_academic():
         "id": acad_id,
         "username": username,
         "password": hash_password(DEFAULT_ACADEMIC_PASSWORD),
+        "password_encrypted": encrypt_password(DEFAULT_ACADEMIC_PASSWORD),
         "role": "Faculty",
         "registration_id": academics[acad_id]['registration_id'],
         "status": "active",
@@ -853,7 +906,8 @@ def list_students():
 @require_auth
 def add_student():
     """Add new student - only name and section required"""
-    if request.session_data['role'] != 'Admin':
+    # Allow Admin and Faculty to add students
+    if request.session_data['role'] not in ['Admin', 'Faculty']:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
     
     data = request.json
@@ -897,6 +951,7 @@ def add_student():
         "id": stu_id,
         "username": username,
         "password": hash_password(DEFAULT_STUDENT_PASSWORD),
+        "password_encrypted": encrypt_password(DEFAULT_STUDENT_PASSWORD),
         "role": "Student",
         "registration_id": students[stu_id]['registration_id'],
         "status": "active",
@@ -1192,7 +1247,8 @@ def list_timetable():
 @require_auth
 def add_timetable_entry():
     """Add timetable entry with clash detection and section support"""
-    if request.session_data['role'] != 'Admin':
+    # Allow Admin and Faculty to add timetable entries
+    if request.session_data['role'] not in ['Admin', 'Faculty']:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
     
     data = request.json
@@ -1285,7 +1341,8 @@ def add_timetable_entry():
 @require_auth
 def delete_timetable_entry(entry_id):
     """Delete timetable entry"""
-    if request.session_data['role'] != 'Admin':
+    # Allow Admin and Faculty to delete timetable entries
+    if request.session_data['role'] not in ['Admin', 'Faculty']:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
     
     timetable = load_json(TIMETABLE_FILE)
@@ -1301,6 +1358,108 @@ def delete_timetable_entry(entry_id):
                     return jsonify({'success': True, 'message': 'Class deleted successfully'})
     
     return jsonify({'success': False, 'message': 'Timetable entry not found'}), 404
+
+
+@app.route('/api/timetable/<entry_id>', methods=['PUT'])
+@require_auth
+def update_timetable_entry(entry_id):
+    """Update timetable entry (Admin and Faculty)"""
+    if request.session_data['role'] not in ['Admin', 'Faculty']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+    data = request.json or {}
+
+    timetable = load_json(TIMETABLE_FILE)
+
+    # Find existing entry
+    found = None
+    found_day = None
+    for day in DAYS_OF_WEEK:
+        if day in timetable:
+            for entry in timetable[day]:
+                if entry.get('id') == entry_id:
+                    found = entry
+                    found_day = day
+                    break
+        if found:
+            break
+
+    if not found:
+        return jsonify({'success': False, 'message': 'Timetable entry not found'}), 404
+
+    # Prepare updated values (fall back to existing)
+    day = data.get('day', found.get('day', found_day)).strip()
+    start_time = data.get('start_time', found.get('start_time', '')).strip()
+    end_time = data.get('end_time', found.get('end_time', '')).strip()
+    class_name = data.get('class_name', found.get('class_name', '')).strip()
+    faculty_name = data.get('faculty_name', found.get('faculty_name', '')).strip()
+    subject = data.get('subject', found.get('subject', '')).strip()
+    section = data.get('section', found.get('section', '')).strip().upper()
+
+    # Validation
+    if not all([day, start_time, end_time, class_name, faculty_name, subject, section]):
+        return jsonify({'success': False, 'message': 'All required fields including section must be provided'}), 400
+
+    if day not in DAYS_OF_WEEK:
+        return jsonify({'success': False, 'message': 'Invalid day'}), 400
+
+    # Convert times
+    start_time_12 = convert_24_to_12(start_time) if ':' in start_time and ('AM' not in start_time and 'PM' not in start_time) else start_time
+    end_time_12 = convert_24_to_12(end_time) if ':' in end_time and ('AM' not in end_time and 'PM' not in end_time) else end_time
+
+    # Validate end time > start time
+    start_24 = convert_12_to_24(start_time_12) if 'AM' in start_time_12 or 'PM' in start_time_12 else start_time
+    end_24 = convert_12_to_24(end_time_12) if 'AM' in end_time_12 or 'PM' in end_time_12 else end_time
+
+    try:
+        start_hour, start_min = map(int, start_24.split(':'))
+        end_hour, end_min = map(int, end_24.split(':'))
+        start_total = start_hour * 60 + start_min
+        end_total = end_hour * 60 + end_min
+
+        if end_total <= start_total:
+            return jsonify({'success': False, 'message': 'End time must be after start time'}), 400
+    except:
+        return jsonify({'success': False, 'message': 'Invalid time format'}), 400
+
+    # Check for time clash (exclude current entry by id)
+    clash = check_time_clash(day, start_time_12, end_time_12, timetable, exclude_id=entry_id, section=section)
+    if clash:
+        return jsonify({
+            'success': False,
+            'message': f"Time clash detected! {clash['conflicting_class']} is scheduled from {clash['conflicting_time']}",
+            'error_code': 'TT_CLASH_001',
+            'conflicting_class': clash['conflicting_class'],
+            'conflicting_time': clash['conflicting_time']
+        }), 409
+
+    # Apply updates
+    found['day'] = day
+    found['section'] = section
+    found['start_time'] = start_24
+    found['start_time_12'] = start_time_12
+    found['end_time'] = end_24
+    found['end_time_12'] = end_time_12
+    found['class_name'] = sanitize_input(class_name)
+    found['faculty_name'] = sanitize_input(faculty_name)
+    found['subject'] = sanitize_input(subject)
+    found['topic_covered'] = sanitize_input(data.get('topic_covered', found.get('topic_covered', '')).strip())
+    found['classroom'] = sanitize_input(data.get('classroom', found.get('classroom', '')).strip())
+    found['building'] = sanitize_input(data.get('building', found.get('building', '')).strip())
+    found['updated_at'] = get_current_timestamp()
+
+    # If day changed, move entry between day lists
+    if found_day != day:
+        # remove from old day
+        timetable[found_day] = [e for e in timetable.get(found_day, []) if e.get('id') != entry_id]
+        if day not in timetable:
+            timetable[day] = []
+        timetable[day].append(found)
+
+    save_json(TIMETABLE_FILE, timetable)
+    Logger.log_activity(request.session_data['username'], 'TIMETABLE_UPDATED', 'Timetable', entry_id, f'Class {found.get("class_name")} updated', 'success')
+
+    return jsonify({'success': True, 'message': 'Timetable entry updated', 'timetable_entry': found})
 
 # Activity Log APIs
 @app.route('/api/activities/list', methods=['GET'])
@@ -1657,19 +1816,13 @@ def create_backup():
     })
 
 if __name__ == '__main__':
-    # Run server accessible from anywhere (0.0.0.0 allows external connections)
-    # To access from other devices on the same network, use: http://<your-ip-address>:5000
-    # To access from internet, configure port forwarding on your router
+    # Run server bound to localhost only for security (no world-wide access)
     print("\n" + "="*60)
-    print("EduPortal Server Starting...")
+    print("EduPortal Server Starting (local-only)...")
     print("="*60)
-    print(f"Server running on: http://0.0.0.0:5000")
-    print(f"Local access: http://localhost:5000")
-    print(f"Network access: http://<your-ip>:5000")
-    print("="*60)
-    print("To access from internet:")
-    print("1. Configure port forwarding on your router (port 5000)")
-    print("2. Use your public IP address or domain name")
+    print(f"Local access: http://127.0.0.1:5000 or http://localhost:5000")
+    print("Server is NOT exposed to other machines.")
     print("="*60 + "\n")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Bind to 127.0.0.1 to prevent external network access
+    app.run(debug=True, host='127.0.0.1', port=5000)
 

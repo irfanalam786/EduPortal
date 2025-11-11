@@ -1,1 +1,28 @@
-{}
+{
+  "EVT_20251111185106FGG": {
+    "id": "EVT_20251111185106FGG",
+    "title": "JOB FAIR",
+    "date": "2025-11-30",
+    "time": "10:00",
+    "time_12": "10:00 AM",
+    "organizer_name": "Mr. Mansuri",
+    "club_name": "Global tech",
+    "chief_guest": "Mr Irfan Alam",
+    "description": "A Job Fair is an event where employers and job seekers meet to explore employment opportunities. It allows companies to showcase job openings and candidates to submit resumes, attend interviews, and network with recruiters. Job fairs help bridge the gap between education and employment, offering a platform for career growth and professional interaction.",
+    "capacity": 100,
+    "registered_count": 1,
+    "registrations": [
+      {
+        "username": "meraj04803",
+        "student_name": "Meraj",
+        "section": "BCA",
+        "registered_at": "2025-11-11T18:56:18Z"
+      }
+    ],
+    "venue": "MPH",
+    "status": "active",
+    "created_at": "2025-11-11T18:51:06Z",
+    "updated_at": "2025-11-11T18:56:18Z",
+    "created_by": "ADMIN"
+  }
+}

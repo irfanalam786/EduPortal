@@ -4,14 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - EduPortal</title>
+    <!-- Load professional UI font (Inter) from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body class="login-page" id="loginBody">
     <div class="login-container">
         <div class="login-card">
             <div class="login-header">
-                <h1>🎓 EduPortal</h1>
-                <p>Educational Management System</p>
+                <h1>EduPortal</h1>
+                <p style="font-weight:500; color:var(--text-secondary);">Educational Management System</p>
             </div>
             
             <form id="loginForm" class="login-form">
