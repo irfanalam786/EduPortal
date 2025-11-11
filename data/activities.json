@@ -1,0 +1,46 @@
+[
+  {
+    "id": "ACT_000001",
+    "timestamp": "2025-11-11T11:02:01Z",
+    "user": "ADMIN",
+    "action": "DATA_CLEARED",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "All data cleared",
+    "status": "success",
+    "details": {}
+  },
+  {
+    "id": "ACT_000002",
+    "timestamp": "2025-11-11T11:02:13Z",
+    "user": "ADMIN",
+    "action": "THEME_CHANGED",
+    "entity_type": "User",
+    "entity_id": "ADMIN",
+    "description": "Theme changed to light",
+    "status": "success",
+    "details": {}
+  },
+  {
+    "id": "ACT_000003",
+    "timestamp": "2025-11-11T11:02:19Z",
+    "user": "ADMIN",
+    "action": "THEME_CHANGED",
+    "entity_type": "User",
+    "entity_id": "ADMIN",
+    "description": "Theme changed to dark",
+    "status": "success",
+    "details": {}
+  },
+  {
+    "id": "ACT_000004",
+    "timestamp": "2025-11-11T11:06:51Z",
+    "user": "ADMIN",
+    "action": "THEME_CHANGED",
+    "entity_type": "User",
+    "entity_id": "ADMIN",
+    "description": "Theme changed to light",
+    "status": "success",
+    "details": {}
+  }
+]

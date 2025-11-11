@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - EduPortal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <h1 class="logo">🎓 EduPortal</h1>
+            </div>
+            <div class="header-right">
+                <div class="session-timer" id="sessionTimer">
+                    <span>Session: <strong id="timerDisplay">15:00</strong></span>
+                </div>
+                <div class="theme-toggle-container">
+                    <button class="theme-toggle" id="themeToggle" title="Toggle Dark/Light Mode">
+                        <span id="themeIcon">🌙</span>
+                    </button>
+                </div>
+                <div class="user-info">
+                    <span id="userDisplay">User</span>
+                </div>
+            </div>
+        </header>
+        
+        <div class="main-wrapper">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <nav class="sidebar-nav">
+                    <ul>
+                        <li><a href="/dashboard" class="nav-link active" data-page="dashboard">
+                            <span>📊</span> Dashboard
+                        </a></li>
+                        <li id="academicsMenu" style="display: none;">
+                            <a href="/academics" class="nav-link" data-page="academics">
+                                <span>👨‍🏫</span> Academics
+                            </a>
+                        </li>
+                        <li id="studentsMenu" style="display: none;">
+                            <a href="/students" class="nav-link" data-page="students">
+                                <span>👨‍🎓</span> Students
+                            </a>
+                        </li>
+                        <li><a href="/events" class="nav-link" data-page="events">
+                            <span>📅</span> Events
+                        </a></li>
+                        <li><a href="/timetable" class="nav-link" data-page="timetable">
+                            <span>📚</span> Timetable
+                        </a></li>
+                        <li><a href="/profile" class="nav-link" data-page="profile">
+                            <span>👤</span> Profile
+                        </a></li>
+                        <li><a href="#" class="nav-link" data-page="change-password" id="changePasswordLink">
+                            <span>🔒</span> Change Password
+                        </a></li>
+                        <li id="adminMenu" style="display: none;">
+                            <a href="/users" class="nav-link" data-page="users">
+                                <span>👥</span> Users
+                            </a>
+                        </li>
+                        <li id="adminMenu2" style="display: none;">
+                            <a href="/activities" class="nav-link" data-page="activities">
+                                <span>📋</span> Activity Logs
+                            </a>
+                        </li>
+                        <li id="adminMenu3" style="display: none;">
+                            <a href="#" class="nav-link" data-page="data-management" id="dataManagementLink">
+                                <span>🗑️</span> Data Management
+                            </a>
+                        </li>
+                        <li class="sidebar-divider"></li>
+                        <li><a href="#" class="nav-link logout-link" id="logoutBtn">
+                            <span>🚪</span> Logout
+                        </a></li>
+                    </ul>
+                </nav>
+            </aside>
+            
+            <!-- Main Content -->
+            <main class="main-content" id="mainContent">
+                <div id="pageContent">
+                    <!-- Dashboard content will be loaded here -->
+                    <div class="page-header">
+                        <h2>Dashboard</h2>
+                    </div>
+                    
+                    <div class="stats-grid" id="statsGrid">
+                        <!-- Stats cards will be loaded here -->
+                    </div>
+                    
+                    <div class="content-section">
+                        <h3>Quick Actions</h3>
+                        <div class="quick-actions" id="quickActions">
+                            <!-- Quick action buttons -->
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            App.init();
+        });
+    </script>
+</body>
+</html>
+

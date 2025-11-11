@@ -1,0 +1,29 @@
+{
+  "ADMIN": {
+    "id": "ADMIN",
+    "username": "ADMIN",
+    "password": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+    "role": "Admin",
+    "registration_id": "REG-20251111100048-4WTH",
+    "status": "active",
+    "profile_completed": true,
+    "profile": {
+      "first_name": "Irfan Alam",
+      "last_name": "Irfan Alam",
+      "dob": "2004-05-30",
+      "gender": "Male",
+      "marital_status": "Single",
+      "email": "mr.irfan.alam.429529@gmail.com",
+      "father_name": "Mahboob Alam",
+      "mother_name": "Rooptara"
+    },
+    "created_at": "2025-11-11T10:00:48Z",
+    "updated_at": "2025-11-11T11:23:34Z",
+    "last_login": "2025-11-11T11:22:48Z",
+    "login_count": 11,
+    "failed_login_attempts": 0,
+    "account_locked": false,
+    "locked_until": null,
+    "theme": "dark"
+  }
+}
