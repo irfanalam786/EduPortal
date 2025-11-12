@@ -134,15 +134,15 @@ const App = {
      * Start session timer
      */
     startSessionTimer: function() {
-        // Sync with server first
-        this.syncSessionTime();
+        // Sync with server first and wait for it
+        this.syncSessionTime().then(() => {
+            // Update every second locally
+            this.sessionCountdown = setInterval(() => {
+                this.updateTimerDisplay();
+            }, 1000);
+        });
         
-        // Update every second locally
-        this.sessionCountdown = setInterval(() => {
-            this.updateTimerDisplay();
-        }, 1000);
-        
-        // Sync with server every 30 seconds
+        // Sync with server every 30 seconds to stay in sync
         this.sessionTimer = setInterval(() => {
             this.syncSessionTime();
         }, 30000);
@@ -155,14 +155,23 @@ const App = {
         try {
             const response = await this.apiCall('/api/auth/session-status', 'GET');
             if (response.success) {
-                this.remainingSeconds = Math.max(0, response.remaining_seconds);
+                // Get the actual remaining time from server
+                const serverRemainingSeconds = Math.max(0, response.remaining_seconds);
+                
+                // Update local timer only if different or not yet initialized
+                // This prevents jumps when timer is running normally
+                if (!this.timerInitialized || Math.abs(this.remainingSeconds - serverRemainingSeconds) > 5) {
+                    this.remainingSeconds = serverRemainingSeconds;
+                    this.timerInitialized = true;
+                }
+                
                 this.updateTimerDisplay();
             } else {
                 this.handleSessionExpired();
             }
         } catch (error) {
             console.error('Session sync failed:', error);
-            this.handleSessionExpired();
+            // Don't immediately expire on network error, just log it
         }
     },
     
