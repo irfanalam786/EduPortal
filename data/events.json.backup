@@ -1,6 +1,6 @@
 {
-  "EVT_20251111185106FGG": {
-    "id": "EVT_20251111185106FGG",
+  "EVT_20251112095026SKT": {
+    "id": "EVT_20251112095026SKT",
     "title": "JOB FAIR",
     "date": "2025-11-30",
     "time": "10:00",
@@ -8,14 +8,14 @@
     "organizer_name": "Mr. Mansuri",
     "club_name": "Global tech",
     "chief_guest": "Mr Irfan Alam",
-    "description": "A Job Fair is an event where employers and job seekers meet to explore employment opportunities. It allows companies to showcase job openings and candidates to submit resumes, attend interviews, and network with recruiters. Job fairs help bridge the gap between education and employment, offering a platform for career growth and professional interaction.",
+    "description": "any",
     "capacity": 100,
     "registered_count": 0,
     "registrations": [],
     "venue": "MPH",
     "status": "active",
-    "created_at": "2025-11-11T18:51:06Z",
-    "updated_at": "2025-11-11T18:51:06Z",
+    "created_at": "2025-11-12T09:50:26Z",
+    "updated_at": "2025-11-12T09:50:26Z",
     "created_by": "ADMIN"
   }
 }

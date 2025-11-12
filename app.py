@@ -213,13 +213,24 @@ def login():
         return jsonify({'success': False, 'message': 'Username and password are required'}), 400
     
     users = load_json(USERS_FILE)
-    
-    if username not in users:
+
+    # Support case-insensitive username lookup: try exact key first, then case-insensitive match
+    user_key = None
+    if username in users:
+        user_key = username
+    else:
+        # find key by case-insensitive match
+        lower = username.lower()
+        for k in users.keys():
+            if k.lower() == lower:
+                user_key = k
+                break
+
+    if not user_key:
         # Don't log login attempts
-        # Logger.log_activity(username, 'LOGIN_ATTEMPT', description='Failed login - user not found', status='failed')
         return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
-    
-    user = users[username]
+
+    user = users[user_key]
     
     # Check if account is locked
     if user.get('account_locked') and user.get('locked_until'):
@@ -989,6 +1000,10 @@ def add_student():
 @require_auth
 def view_student(stu_id):
     """View student details"""
+    # Allow Admin and Faculty (Academics) to view student details
+    if request.session_data['role'] not in ['Admin', 'Faculty']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
     students = load_json(STUDENTS_FILE)
     users = load_json(USERS_FILE)
     
@@ -1019,9 +1034,8 @@ def view_student(stu_id):
 @require_auth
 def delete_student(stu_id):
     """Delete student (Admin and Academics can delete)"""
-    role = request.session_data['role']
-    
-    if role not in ['Admin', 'Faculty']:
+    # Allow Admin and Faculty (Academics) to delete students
+    if request.session_data['role'] not in ['Admin', 'Faculty']:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
     
     students = load_json(STUDENTS_FILE)
@@ -1048,6 +1062,59 @@ def delete_student(stu_id):
     Logger.log_activity(request.session_data['username'], 'STUDENT_DELETED', 'Student', stu_id, f'Student {student["student_name"]} deleted', 'success')
     
     return jsonify({'success': True, 'message': 'Student deleted successfully'})
+
+@app.route('/api/students/<stu_id>', methods=['PUT'])
+@require_auth
+def update_student(stu_id):
+    """Update student details (Admin and Faculty can update)"""
+    # Allow Admin and Faculty (Academics) to update students
+    if request.session_data['role'] not in ['Admin', 'Faculty']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    data = request.json
+    students = load_json(STUDENTS_FILE)
+    
+    if stu_id not in students:
+        return jsonify({'success': False, 'message': 'Student not found'}), 404
+    
+    student = students[stu_id]
+    
+    # Update fields if provided
+    if 'student_name' in data:
+        student['student_name'] = sanitize_input(data['student_name'].strip())
+    if 'section' in data:
+        student['section'] = data['section'].strip().upper()
+    if 'first_name' in data:
+        student['first_name'] = sanitize_input(data['first_name'].strip())
+    if 'last_name' in data:
+        student['last_name'] = sanitize_input(data['last_name'].strip())
+    if 'email' in data:
+        email = data['email'].strip().lower()
+        if email and validate_email(email):
+            student['email'] = email
+    if 'phone' in data:
+        phone = data['phone'].strip()
+        if phone and validate_phone(phone):
+            student['phone'] = phone
+    if 'dob' in data:
+        student['dob'] = data['dob'].strip()
+    if 'gender' in data:
+        student['gender'] = data['gender'].strip()
+    if 'father_name' in data:
+        student['father_name'] = sanitize_input(data['father_name'].strip())
+    if 'mother_name' in data:
+        student['mother_name'] = sanitize_input(data['mother_name'].strip())
+    
+    student['updated_at'] = get_current_timestamp()
+    save_json(STUDENTS_FILE, students)
+    
+    Logger.log_activity(request.session_data['username'], 'STUDENT_UPDATED', 'Student', stu_id, f'Student {student["student_name"]} updated', 'success')
+    
+    return jsonify({
+        'success': True,
+        'message': 'Student updated successfully',
+        'student': student
+    })
 
 # Event Management APIs
 @app.route('/api/events/list', methods=['GET'])
@@ -1247,7 +1314,7 @@ def list_timetable():
 @require_auth
 def add_timetable_entry():
     """Add timetable entry with clash detection and section support"""
-    # Allow Admin and Faculty to add timetable entries
+    # Allow Admin and Faculty (Academics) to add timetable entries
     if request.session_data['role'] not in ['Admin', 'Faculty']:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
     
@@ -1341,7 +1408,7 @@ def add_timetable_entry():
 @require_auth
 def delete_timetable_entry(entry_id):
     """Delete timetable entry"""
-    # Allow Admin and Faculty to delete timetable entries
+    # Allow Admin and Faculty (Academics) to delete timetable entries
     if request.session_data['role'] not in ['Admin', 'Faculty']:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
     
@@ -1364,6 +1431,7 @@ def delete_timetable_entry(entry_id):
 @require_auth
 def update_timetable_entry(entry_id):
     """Update timetable entry (Admin and Faculty)"""
+    # Allow Admin and Faculty (Academics) to update timetable entries
     if request.session_data['role'] not in ['Admin', 'Faculty']:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
 
@@ -1814,6 +1882,23 @@ def create_backup():
         'backup_folder': f'backup_{timestamp}',
         'files': backed_up
     })
+
+# Global error handler for unexpected exceptions
+@app.errorhandler(Exception)
+def handle_exception(error):
+    """Catch all unhandled exceptions and return JSON error response"""
+    import traceback
+    error_msg = str(error)
+    error_trace = traceback.format_exc()
+    
+    Logger.log_activity('SYSTEM', 'ERROR_EXCEPTION', 'System', None, f'Unhandled exception: {error_msg}', 'error')
+    print(f"UNHANDLED EXCEPTION:\n{error_trace}")
+    
+    return jsonify({
+        'success': False,
+        'message': 'An unexpected error occurred. Please try again.',
+        'error': error_msg if app.debug else 'Internal server error'
+    }), 500
 
 if __name__ == '__main__':
     # Run server bound to localhost only for security (no world-wide access)

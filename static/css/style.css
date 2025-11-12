@@ -33,14 +33,11 @@
 }
 
 body {
-    /* Use Inter as primary professional UI font, fall back to system fonts */
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 15px;
-    line-height: 1.45;
+    line-height: 1.4;
     color: var(--text-primary);
     background-color: var(--bg-light);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
 }
 
 /* Login Page */
@@ -144,15 +141,6 @@ body.dark-mode.login-page {
     color: var(--text-secondary);
 }
 
-/* Login page logo */
-.login-logo {
-    height: 80px;
-    width: auto;
-    margin-bottom: 16px;
-    border-radius: 8px;
-    object-fit: contain;
-}
-
 /* App Container */
 .app-container {
     min-height: 100vh;
@@ -199,18 +187,8 @@ body.dark-mode.login-page {
 }
 
 .logo {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
-    letter-spacing: -0.2px;
-}
-
-/* Brand logo in header */
-.brand-logo {
-    height: 42px;
-    width: auto;
-    margin-right: 12px;
-    border-radius: 6px;
-    object-fit: contain;
 }
 
 .header-right {
@@ -818,28 +796,6 @@ body.dark-mode .form-group textarea {
     color: #60a5fa;
 }
 
-/* Password info small panel for Admin */
-.pw-info {
-    margin-top: 8px;
-    background: #f8fafc;
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    width: 100%;
-    font-size: 13px;
-}
-
-.pw-info .mono {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace;
-    word-break: break-all;
-}
-
-.pw-warning {
-    color: #b91c1c;
-    font-size: 13px;
-    margin-top: 6px;
-}
-
 body.dark-mode .form-group input:focus,
 body.dark-mode .form-group select:focus,
 body.dark-mode .form-group textarea:focus {
@@ -1016,38 +972,5 @@ body.dark-mode .badge-warning {
 .loading {
     opacity: 0.6;
     pointer-events: none;
-}
-
-/* Login page theme toggle */
-.login-theme-toggle {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    width: 45px;
-    height: 45px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 24px;
-    z-index: 100;
-}
-
-.login-theme-toggle:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.1);
-}
-
-body.dark-mode .login-theme-toggle {
-    background: rgba(0, 0, 0, 0.2);
-    border-color: rgba(255, 255, 255, 0.3);
-}
-
-body.dark-mode .login-theme-toggle:hover {
-    background: rgba(0, 0, 0, 0.3);
 }
 

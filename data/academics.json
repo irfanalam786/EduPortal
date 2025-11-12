@@ -1,17 +1,17 @@
 {
-  "ACM_20251111183020AIN": {
-    "id": "ACM_20251111183020AIN",
+  "ACM_20251112092556SHM": {
+    "id": "ACM_20251112092556SHM",
     "name": "Imran Alam",
-    "username": "imran76947",
+    "username": "imran.alam",
     "department": "Admission",
-    "qualification": "M. Com.",
-    "experience": "4",
+    "qualification": "B. Com(H)",
+    "experience": "0",
     "email": "imranalam@edu.ac.in",
     "phone": "9540401450",
     "status": "active",
-    "registration_id": "REG-20251111183020-DTXH",
-    "created_at": "2025-11-11T18:30:20Z",
-    "updated_at": "2025-11-11T18:30:20Z",
+    "registration_id": "REG-20251112092556-3SAU",
+    "created_at": "2025-11-12T09:25:56Z",
+    "updated_at": "2025-11-12T09:25:56Z",
     "created_by": "ADMIN"
   }
 }

@@ -1,37 +1,20 @@
 {
   "Monday": [
     {
-      "id": "TT_2025111118532464E",
+      "id": "TT_20251112105658POD",
       "day": "Monday",
-      "section": "BCA",
+      "section": "A",
       "start_time": "09:00",
       "start_time_12": "9:00 AM",
       "end_time": "11:00",
       "end_time_12": "11:00 AM",
-      "class_name": "SPM",
+      "class_name": "BCA",
       "faculty_name": "Rakesh Kumar",
       "subject": "SPM",
-      "topic_covered": "Basics of SPM tool",
+      "topic_covered": "BASICS",
       "classroom": "C-005",
-      "building": "MAIN",
-      "created_at": "2025-11-11T18:53:24Z",
-      "created_by": "ADMIN"
-    },
-    {
-      "id": "TT_20251111185536CQ3",
-      "day": "Monday",
-      "section": "B. SC. (DA)",
-      "start_time": "08:00",
-      "start_time_12": "8:00 AM",
-      "end_time": "11:00",
-      "end_time_12": "11:00 AM",
-      "class_name": "TFS",
-      "faculty_name": "Mr Pipul Kumar",
-      "subject": "TFS",
-      "topic_covered": "BASICS OF TFS",
-      "classroom": "A-001",
       "building": "NA",
-      "created_at": "2025-11-11T18:55:36Z",
+      "created_at": "2025-11-12T10:56:58Z",
       "created_by": "ADMIN"
     }
   ],

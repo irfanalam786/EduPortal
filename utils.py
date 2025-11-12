@@ -10,12 +10,6 @@ import secrets
 import string
 from datetime import datetime, timedelta
 from config import DATA_DIR
-from base64 import urlsafe_b64encode, urlsafe_b64decode
-
-try:
-    from cryptography.fernet import Fernet
-except Exception:
-    Fernet = None
 
 def load_json(filepath):
     """Load JSON data from file"""
@@ -53,6 +47,16 @@ def verify_password(password, hashed):
     """Verify password against hash"""
     return hash_password(password) == hashed
 
+def encrypt_password(password):
+    """Encrypt password using SHA256 (same as hash_password for consistency)"""
+    return hash_password(password)
+
+def decrypt_password(encrypted_password):
+    """Passwords are hashed, not encrypted - this returns the hash as-is"""
+    # Note: Passwords are one-way hashed, not encrypted
+    # This function is kept for API compatibility
+    return encrypted_password
+
 def generate_session_token():
     """Generate secure random session token"""
     return secrets.token_urlsafe(32)
@@ -70,50 +74,22 @@ def generate_id(prefix):
     return f"{prefix}_{timestamp}{random_suffix}"
 
 def generate_username(name, existing_usernames):
-    """Generate unique username from name.
-
-    New format: use the first name (lowercase, alphanumeric only) and append a random numeric
-    suffix. Example: name "irfan alam" -> "irfan07864".
-
-    NOTE: you asked for "mixed of 3 number" but the example uses 5 digits; I'm assuming a
-    5-digit numeric suffix to match the example. If you prefer 3 digits, tell me and I'll
-    change the suffix length to 3.
-    """
-    # Extract first name
-    if not name or not isinstance(name, str):
-        base = 'user'
-    else:
-        parts = name.strip().split()
-        base = parts[0] if parts else name.strip()
-
-    # Keep only alphanumeric characters and lowercase
-    base = ''.join(ch.lower() for ch in base if ch.isalnum())
-    if not base:
-        base = 'user'
-
-    # Generate numeric suffix of length 5 (random)
-    import secrets
-    suffix_length = 5
-    attempt = 0
-    username = None
-
-    while attempt < 20:
-        suffix = ''.join(secrets.choice('0123456789') for _ in range(suffix_length))
-        candidate = f"{base}{suffix}"
-        if candidate not in existing_usernames:
-            username = candidate
-            break
-        attempt += 1
-
-    # Fallback: if we couldn't find a unique random username, append counter
-    if not username:
-        counter = 1
-        candidate = f"{base}{counter}"
-        while candidate in existing_usernames:
-            counter += 1
-            candidate = f"{base}{counter}"
-        username = candidate
-
+    """Generate unique username from name"""
+    # Remove special characters and spaces, convert to lowercase
+    base_username = ''.join(c.lower() for c in name if c.isalnum() or c == ' ').replace(' ', '.')
+    
+    # If base is empty, use default
+    if not base_username:
+        base_username = 'user'
+    
+    username = base_username
+    counter = 1
+    
+    # Ensure uniqueness
+    while username in existing_usernames:
+        username = f"{base_username}{counter}"
+        counter += 1
+    
     return username
 
 def convert_24_to_12(time_24):
@@ -213,74 +189,6 @@ def check_time_clash(day, start_time, end_time, timetable_data, exclude_id=None,
 def get_current_timestamp():
     """Get current timestamp in ISO format"""
     return datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-# --- Reversible password encryption helpers (Fernet) ---
-SECRET_KEY_FILE = os.path.join(DATA_DIR, 'secret.key')
-
-def _load_or_create_fernet_key():
-    """Load Fernet key from env or file; create file if missing. Returns bytes key or None if cryptography missing."""
-    if Fernet is None:
-        return None
-
-    # Prefer environment variable
-    env_key = os.environ.get('PASSWORD_SECRET_KEY')
-    if env_key:
-        try:
-            # Accept raw key or URL-safe base64
-            return env_key.encode() if isinstance(env_key, str) else env_key
-        except Exception:
-            pass
-
-    # Otherwise use a persistent file under data directory
-    try:
-        if os.path.exists(SECRET_KEY_FILE):
-            with open(SECRET_KEY_FILE, 'rb') as f:
-                return f.read().strip()
-        else:
-            # Generate a new key and write it
-            key = Fernet.generate_key()
-            os.makedirs(os.path.dirname(SECRET_KEY_FILE), exist_ok=True)
-            with open(SECRET_KEY_FILE, 'wb') as f:
-                f.write(key)
-            return key
-    except Exception:
-        return None
-
-
-def get_fernet():
-    """Return a Fernet instance or None if unavailable."""
-    key = _load_or_create_fernet_key()
-    if not key or Fernet is None:
-        return None
-    try:
-        return Fernet(key)
-    except Exception:
-        return None
-
-
-def encrypt_password(plaintext):
-    """Encrypt plaintext password using Fernet. Returns token string or None."""
-    f = get_fernet()
-    if not f or plaintext is None:
-        return None
-    try:
-        token = f.encrypt(plaintext.encode())
-        return token.decode()
-    except Exception:
-        return None
-
-
-def decrypt_password(token):
-    """Decrypt token (string) and return plaintext or None."""
-    f = get_fernet()
-    if not f or not token:
-        return None
-    try:
-        return f.decrypt(token.encode()).decode()
-    except Exception:
-        return None
-
 
 def format_datetime(dt_string):
     """Format datetime string for display"""

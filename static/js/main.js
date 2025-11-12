@@ -401,7 +401,7 @@ const App = {
                     </div>
                     
                     <div id="clearAllWarning" style="display: none; padding: 12px; background: #fee2e2; border-radius: 6px; margin-bottom: 16px;">
-                        <strong style="color: #991b1b;">Warning: This will delete ALL data except Admin user!</strong>
+                        <strong style="color: #991b1b;">⚠️ This will delete ALL data except Admin user!</strong>
                         <ul style="margin: 8px 0 0 20px; color: #991b1b;">
                             <li>All Academics</li>
                             <li>All Students</li>
@@ -446,7 +446,7 @@ const App = {
         const clearType = document.getElementById('clearType').value;
         
         if (clearType === 'all') {
-            if (!confirm('WARNING: This will delete ALL data except Admin user. This cannot be undone!\n\nAre you absolutely sure?')) {
+            if (!confirm('⚠️ WARNING: This will delete ALL data except Admin user. This cannot be undone!\n\nAre you absolutely sure?')) {
                 return;
             }
             
@@ -535,7 +535,7 @@ const App = {
             <div class="card" style="max-width: 500px; margin: 0 auto;">
                 <div style="padding: 24px;">
                     <p style="margin-bottom: 24px; color: #ef4444;">
-                        <strong>First Time Login:</strong> You must change your default password before continuing.
+                        <strong>⚠️ First Time Login:</strong> You must change your default password before continuing.
                     </p>
                     
                     <form id="changePasswordForm">
@@ -708,34 +708,34 @@ const App = {
         if (this.user.role === 'Admin') {
             return `
                 <a href="#" class="quick-action-btn" data-action="add-academic">
-                    <div class="icon">Academic</div>
+                    <div class="icon">👨‍🏫</div>
                     <div class="label">Add Academic</div>
                 </a>
                 <a href="#" class="quick-action-btn" data-action="add-student">
-                    <div class="icon">Student</div>
+                    <div class="icon">👨‍🎓</div>
                     <div class="label">Add Student</div>
                 </a>
                 <a href="#" class="quick-action-btn" data-action="add-event">
-                    <div class="icon">Event</div>
+                    <div class="icon">📅</div>
                     <div class="label">Create Event</div>
                 </a>
                 <a href="#" class="quick-action-btn" data-action="add-class">
-                    <div class="icon">Class</div>
+                    <div class="icon">📚</div>
                     <div class="label">Add Class</div>
                 </a>
             `;
         } else {
             return `
                 <a href="#" class="quick-action-btn" data-action="view-timetable">
-                    <div class="icon">Timetable</div>
+                    <div class="icon">📚</div>
                     <div class="label">My Timetable</div>
                 </a>
                 <a href="#" class="quick-action-btn" data-action="view-events">
-                    <div class="icon">Events</div>
+                    <div class="icon">📅</div>
                     <div class="label">Events</div>
                 </a>
                 <a href="#" class="quick-action-btn" data-action="view-profile">
-                    <div class="icon">Profile</div>
+                    <div class="icon">👤</div>
                     <div class="label">My Profile</div>
                 </a>
             `;
@@ -846,8 +846,8 @@ const App = {
             <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h2>Academics Management</h2>
                 <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-secondary" onclick="App.exportData('academics', 'csv')">Export CSV</button>
-                    <button class="btn btn-secondary" onclick="App.exportData('academics', 'pdf')">Export PDF</button>
+                    <button class="btn btn-secondary" onclick="App.exportData('academics', 'csv')">📥 Export CSV</button>
+                    <button class="btn btn-secondary" onclick="App.exportData('academics', 'pdf')">📄 Export PDF</button>
                     <button class="btn btn-primary" id="addAcademicBtn">+ Add Academic</button>
                 </div>
             </div>
@@ -1195,8 +1195,7 @@ const App = {
      * Load students page
      */
     loadStudents: async function() {
-        // Allow Admin and Faculty to access the Students Management page
-        if (this.user.role !== 'Admin' && this.user.role !== 'Faculty') {
+        if (this.user.role !== 'Admin') {
             this.showToast('Unauthorized access', 'error');
             return;
         }
@@ -1205,8 +1204,8 @@ const App = {
             <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h2>Students Management</h2>
                 <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-secondary" onclick="App.exportData('students', 'csv')">Export CSV</button>
-                    <button class="btn btn-secondary" onclick="App.exportData('students', 'pdf')">Export PDF</button>
+                    <button class="btn btn-secondary" onclick="App.exportData('students', 'csv')">📥 Export CSV</button>
+                    <button class="btn btn-secondary" onclick="App.exportData('students', 'pdf')">📄 Export PDF</button>
                     <button class="btn btn-primary" id="addStudentBtn">+ Add Student</button>
                 </div>
             </div>
@@ -1728,11 +1727,11 @@ const App = {
         const content = `
             <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h2>Timetable Management</h2>
-                ${this.user.role === 'Admin' || this.user.role === 'Faculty' ? `
+                ${this.user.role === 'Admin' ? `
                     <div style="display: flex; gap: 8px;">
-                        <button class="btn btn-secondary" onclick="App.exportData('timetable', 'csv')">Export CSV</button>
-                        <button class="btn btn-secondary" onclick="App.exportData('timetable', 'pdf')">Export PDF</button>
-                                <button class="btn btn-primary" id="addClassBtn">+ Add Class</button>
+                        <button class="btn btn-secondary" onclick="App.exportData('timetable', 'csv')">📥 Export CSV</button>
+                        <button class="btn btn-secondary" onclick="App.exportData('timetable', 'pdf')">📄 Export PDF</button>
+                        <button class="btn btn-primary" id="addClassBtn">+ Add Class</button>
                     </div>
                 ` : ''}
             </div>
@@ -1746,9 +1745,8 @@ const App = {
         
         document.getElementById('mainContent').innerHTML = content;
         
-        if (this.user.role === 'Admin' || this.user.role === 'Faculty') {
-            const addBtn = document.getElementById('addClassBtn');
-            if (addBtn) addBtn.addEventListener('click', () => {
+        if (this.user.role === 'Admin') {
+            document.getElementById('addClassBtn').addEventListener('click', () => {
                 this.showAddClassModal();
             });
         }
@@ -1795,7 +1793,7 @@ const App = {
             sections.forEach(section => {
                 html += `<div class="card" style="margin-bottom: 24px;"><h3 style="margin-bottom: 16px;">Section: ${section}</h3>`;
                 html += '<div class="table-container"><table><thead><tr><th>Day</th><th>Time</th><th>Class</th><th>Faculty</th><th>Subject</th><th>Room</th>';
-                if (this.user.role === 'Admin' || this.user.role === 'Faculty') {
+                if (this.user.role === 'Admin') {
                     html += '<th>Actions</th>';
                 }
                 html += '</tr></thead><tbody>';
@@ -1814,7 +1812,7 @@ const App = {
                                     <td>${this.escapeHtml(entry.faculty_name)}</td>
                                     <td>${this.escapeHtml(entry.subject)}</td>
                                     <td>${this.escapeHtml(entry.classroom || '-')}</td>
-                                    ${this.user.role === 'Admin' || this.user.role === 'Faculty' ? `<td><button class="btn btn-sm btn-danger" onclick="App.deleteTimetableEntry('${entry.id}')">Delete</button></td>` : ''}
+                                    ${this.user.role === 'Admin' ? `<td><button class="btn btn-sm btn-danger" onclick="App.deleteTimetableEntry('${entry.id}')">Delete</button></td>` : ''}
                                 </tr>
                             `;
                         });
@@ -2008,7 +2006,7 @@ const App = {
         if (!data.profile_completed) {
             container.innerHTML = `
                 <div class="alert alert-warning">
-                    <h3>Complete Your Profile</h3>
+                    <h3>⚠️ Complete Your Profile</h3>
                     <p>You must complete your profile before accessing the dashboard.</p>
                 </div>
                 ${this.getProfileForm(data)}
@@ -2180,9 +2178,9 @@ const App = {
             <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h2>Users Management</h2>
                 <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-secondary" onclick="App.exportData('users', 'csv')">Export CSV</button>
-                    <button class="btn btn-secondary" onclick="App.exportData('users', 'pdf')">Export PDF</button>
-                    <button class="btn btn-success" onclick="App.createBackup()">Backup Data</button>
+                    <button class="btn btn-secondary" onclick="App.exportData('users', 'csv')">📥 Export CSV</button>
+                    <button class="btn btn-secondary" onclick="App.exportData('users', 'pdf')">📄 Export PDF</button>
+                    <button class="btn btn-success" onclick="App.createBackup()">💾 Backup Data</button>
                     <button class="btn btn-primary" id="addUserBtn">+ Add User</button>
                 </div>
             </div>
@@ -2287,22 +2285,9 @@ const App = {
                 <td><span class="badge ${user.status === 'active' ? 'badge-success' : 'badge-danger'}">${user.status}</span></td>
                 <td><span class="badge ${user.profile_completed ? 'badge-success' : 'badge-warning'}">${user.profile_status || (user.profile_completed ? 'Completed' : 'Incomplete')}</span></td>
                 <td>
-                    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start;">
-                        <div style="display:flex;gap:8px;">
-                            <button class="btn btn-sm btn-secondary" onclick="App.toggleUserStatus('${this.escapeJs(user.username)}', '${this.escapeJs(user.status)}')">
-                                ${user.status === 'active' ? 'Deactivate' : 'Activate'}
-                            </button>
-                            ${this.user && this.user.role === 'Admin' ? `<button class="btn btn-sm btn-primary" onclick="App.togglePasswordView('${this.escapeJs(user.username)}')">Show Passwords</button>` : ''}
-                        </div>
-                        ${this.user && this.user.role === 'Admin' ? `
-                        <div id="pw-info-${this.idSafe(user.username)}" class="pw-info" style="display:none;">
-                            <div><strong>Hash:</strong> <span class="mono">${this.escapeHtml(user.password_hash || '-')}</span></div>
-                            <div><strong>Encrypted:</strong> <span class="mono">${this.escapeHtml(user.password_encrypted || '-')}</span></div>
-                            <div><strong>Plain:</strong> <span class="mono pw-plain">${this.escapeHtml(user.password_plain || '-')}</span></div>
-                            <div class="pw-warning">Warning: Plaintext passwords are sensitive. Only Admin should view this.</div>
-                        </div>
-                        ` : ''}
-                    </div>
+                    <button class="btn btn-sm btn-secondary" onclick="App.toggleUserStatus('${user.username}', '${user.status}')">
+                        ${user.status === 'active' ? 'Deactivate' : 'Activate'}
+                    </button>
                 </td>
             </tr>
         `).join('');
@@ -2389,36 +2374,6 @@ const App = {
             this.showToast('Failed to update user status', 'error');
         }
     },
-
-    /**
-     * Make a safe DOM id from username
-     */
-    idSafe: function(username) {
-        if (!username) return '';
-        return 'u_' + username.replace(/[^a-zA-Z0-9_-]/g, '_');
-    },
-
-    /**
-     * Escape a string for embedding in JS single-quoted attribute
-     */
-    escapeJs: function(str) {
-        if (!str) return '';
-        return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\"/g, '\\"');
-    },
-
-    /**
-     * Toggle display of password info for a user (Admin only)
-     */
-    togglePasswordView: function(username) {
-        const id = 'pw-info-' + this.idSafe(username);
-        const el = document.getElementById(id);
-        if (!el) return;
-        if (el.style.display === 'none' || !el.style.display) {
-            el.style.display = 'block';
-        } else {
-            el.style.display = 'none';
-        }
-    },
     
     /**
      * Load activities page (Admin only)
@@ -2428,8 +2383,8 @@ const App = {
             <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h2>Activity Logs</h2>
                 <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-secondary" onclick="App.exportData('activities', 'csv')">Export CSV</button>
-                    <button class="btn btn-secondary" onclick="App.exportData('activities', 'pdf')">Export PDF</button>
+                    <button class="btn btn-secondary" onclick="App.exportData('activities', 'csv')">📥 Export CSV</button>
+                    <button class="btn btn-secondary" onclick="App.exportData('activities', 'pdf')">📄 Export PDF</button>
                 </div>
             </div>
             
@@ -2528,10 +2483,10 @@ const App = {
         toast.className = `toast ${type}`;
         
         const icons = {
-            success: 'Success',
-            error: 'Error',
-            warning: 'Warning',
-            info: 'Info'
+            success: '✅',
+            error: '❌',
+            warning: '⚠️',
+            info: 'ℹ️'
         };
         
         toast.innerHTML = `
