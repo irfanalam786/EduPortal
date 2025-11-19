@@ -64,5 +64,203 @@
     "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
     "status": "error",
     "details": {}
+  },
+  {
+    "id": "ACT_000007",
+    "timestamp": "2025-11-19T18:56:00Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000008",
+    "timestamp": "2025-11-19T18:56:13Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000009",
+    "timestamp": "2025-11-19T18:56:34Z",
+    "user": "ADMIN",
+    "action": "ACADEMIC_ADDED",
+    "entity_type": "Academic",
+    "entity_id": "ACM_20251119185634FZO",
+    "description": "Academic Imran Alam added",
+    "status": "success",
+    "details": {}
+  },
+  {
+    "id": "ACT_000010",
+    "timestamp": "2025-11-19T18:56:47Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000011",
+    "timestamp": "2025-11-19T18:57:05Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000012",
+    "timestamp": "2025-11-19T19:08:15Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000013",
+    "timestamp": "2025-11-19T19:16:18Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000014",
+    "timestamp": "2025-11-19T19:16:25Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000015",
+    "timestamp": "2025-11-19T19:22:17Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000016",
+    "timestamp": "2025-11-19T19:22:31Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000017",
+    "timestamp": "2025-11-19T19:23:13Z",
+    "user": "imran.alam",
+    "action": "TIMETABLE_ADDED",
+    "entity_type": "Timetable",
+    "entity_id": "TT_20251119192313HVQ",
+    "description": "Class BCA added to Monday for section A",
+    "status": "success",
+    "details": {}
+  },
+  {
+    "id": "ACT_000018",
+    "timestamp": "2025-11-19T19:24:12Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000019",
+    "timestamp": "2025-11-19T20:16:39Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000020",
+    "timestamp": "2025-11-19T20:16:58Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000021",
+    "timestamp": "2025-11-19T20:17:27Z",
+    "user": "ADMIN",
+    "action": "PROFILE_PHOTO_UPDATED",
+    "entity_type": "User",
+    "entity_id": "ADMIN",
+    "description": "Profile photo updated",
+    "status": "success",
+    "details": {}
+  },
+  {
+    "id": "ACT_000022",
+    "timestamp": "2025-11-19T20:18:13Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000023",
+    "timestamp": "2025-11-19T20:18:26Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000024",
+    "timestamp": "2025-11-19T20:18:36Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
   }
 ]

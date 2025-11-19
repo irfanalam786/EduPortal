@@ -17,6 +17,8 @@ os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(os.path.join(STATIC_DIR, 'css'), exist_ok=True)
 os.makedirs(os.path.join(STATIC_DIR, 'js'), exist_ok=True)
 os.makedirs(os.path.join(STATIC_DIR, 'images'), exist_ok=True)
+PROFILE_PHOTOS_DIR = os.path.join(STATIC_DIR, 'images', 'profiles')
+os.makedirs(PROFILE_PHOTOS_DIR, exist_ok=True)
 
 # Data file paths
 USERS_FILE = os.path.join(DATA_DIR, 'users.json')

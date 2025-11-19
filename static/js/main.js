@@ -25,10 +25,21 @@ const App = {
         }
         
         this.user = JSON.parse(userStr);
+        const storedTimerRaw = sessionStorage.getItem('session_remaining_seconds');
+        let storedTimer = NaN;
+        if (storedTimerRaw !== null) {
+            storedTimer = parseInt(storedTimerRaw, 10);
+            if (!Number.isNaN(storedTimer) && storedTimer > 0) {
+                this.remainingSeconds = storedTimer;
+            }
+        }
         
         // Setup UI
         this.setupUI();
         this.setupEventListeners();
+        if (!Number.isNaN(storedTimer) && storedTimer > 0) {
+            this.updateTimerDisplay(false);
+        }
         this.startSessionTimer();
         this.loadPage(this.currentPage);
         
@@ -72,6 +83,17 @@ const App = {
      * Setup event listeners
      */
     setupEventListeners: function() {
+        const homeLogo = document.getElementById('homeLogo');
+        if (homeLogo) {
+            const goHome = () => this.navigateToPage('dashboard');
+            homeLogo.addEventListener('click', goHome);
+            homeLogo.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    goHome();
+                }
+            });
+        }
         // Menu toggle
         const menuToggle = document.getElementById('menuToggle');
         if (menuToggle) {
@@ -165,7 +187,7 @@ const App = {
                     this.timerInitialized = true;
                 }
                 
-                this.updateTimerDisplay();
+                this.updateTimerDisplay(false);
             } else {
                 this.handleSessionExpired();
             }
@@ -178,8 +200,9 @@ const App = {
     /**
      * Update timer display (countdown decreasing per second)
      */
-    updateTimerDisplay: function() {
+    updateTimerDisplay: function(shouldDecrease = true) {
         if (this.remainingSeconds <= 0) {
+            sessionStorage.removeItem('session_remaining_seconds');
             this.handleSessionExpired();
             return;
         }
@@ -206,7 +229,10 @@ const App = {
         }
         
         // Decrease counter
-        this.remainingSeconds = Math.max(0, this.remainingSeconds - 1);
+        if (shouldDecrease) {
+            this.remainingSeconds = Math.max(0, this.remainingSeconds - 1);
+        }
+        sessionStorage.setItem('session_remaining_seconds', this.remainingSeconds);
     },
     
     /**
@@ -1204,19 +1230,28 @@ const App = {
      * Load students page
      */
     loadStudents: async function() {
-        if (this.user.role !== 'Admin') {
+        const canManageStudents = ['Admin', 'Faculty'].includes(this.user.role);
+        if (!canManageStudents) {
             this.showToast('Unauthorized access', 'error');
             return;
         }
-        
+
+        const actionButtons = [];
+        if (this.user.role === 'Admin') {
+            actionButtons.push(`<button class="btn btn-secondary" onclick="App.exportData('students', 'csv')">📥 Export CSV</button>`);
+            actionButtons.push(`<button class="btn btn-secondary" onclick="App.exportData('students', 'pdf')">📄 Export PDF</button>`);
+        }
+        if (canManageStudents) {
+            actionButtons.push(`<button class="btn btn-primary" id="addStudentBtn">+ Add Student</button>`);
+        }
+        const actionsMarkup = actionButtons.length
+            ? `<div style="display: flex; gap: 8px;">${actionButtons.join('')}</div>`
+            : '';
+
         const content = `
             <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h2>Students Management</h2>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-secondary" onclick="App.exportData('students', 'csv')">📥 Export CSV</button>
-                    <button class="btn btn-secondary" onclick="App.exportData('students', 'pdf')">📄 Export PDF</button>
-                    <button class="btn btn-primary" id="addStudentBtn">+ Add Student</button>
-                </div>
+                ${actionsMarkup}
             </div>
             
             <div class="card">
@@ -1245,9 +1280,12 @@ const App = {
         
         document.getElementById('mainContent').innerHTML = content;
         
-        document.getElementById('addStudentBtn').addEventListener('click', () => {
-            this.showAddStudentModal();
-        });
+        const addBtn = document.getElementById('addStudentBtn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => {
+                this.showAddStudentModal();
+            });
+        }
         
         await this.loadStudentsList();
     },
@@ -1272,6 +1310,7 @@ const App = {
     renderStudentsTable: function(students) {
         const tbody = document.getElementById('studentsTableBody');
         if (!tbody) return;
+        const canManageStudents = ['Admin', 'Faculty'].includes(this.user.role);
         
         if (students.length === 0) {
             tbody.innerHTML = '<tr><td colspan="9" class="text-center">No students found</td></tr>';
@@ -1290,7 +1329,8 @@ const App = {
                 <td><span class="badge ${stu.status === 'active' ? 'badge-success' : 'badge-danger'}">${stu.status}</span></td>
                 <td>
                     <button class="btn btn-sm btn-primary" onclick="App.viewStudent('${stu.id}')">View</button>
-                    ${this.user.role === 'Admin' || this.user.role === 'Faculty' ? `<button class="btn btn-sm btn-danger" onclick="App.deleteStudent('${stu.id}')">Delete</button>` : ''}
+                    ${canManageStudents ? `<button class="btn btn-sm btn-secondary" onclick="App.editStudent('${stu.id}')">Edit</button>` : ''}
+                    ${canManageStudents ? `<button class="btn btn-sm btn-danger" onclick="App.deleteStudent('${stu.id}')">Delete</button>` : ''}
                 </td>
             </tr>
         `).join('');
@@ -1372,6 +1412,116 @@ const App = {
             }
         } catch (error) {
             this.showToast('Failed to delete student', 'error');
+        }
+    },
+
+    /**
+     * Edit student (load details into modal)
+     */
+    editStudent: async function(stuId) {
+        try {
+            const response = await this.apiCall(`/api/students/${stuId}/view`, 'GET');
+            if (response.success) {
+                this.showEditStudentModal(response.student);
+            } else {
+                this.showToast(response.message, 'error');
+            }
+        } catch (error) {
+            this.showToast('Failed to load student details', 'error');
+        }
+    },
+
+    /**
+     * Show edit student modal
+     */
+    showEditStudentModal: function(student) {
+        const modal = this.createModal(
+            `Edit Student - ${this.escapeHtml(student.student_name)}`,
+            `
+                <form id="editStudentForm" data-student-id="${student.id}">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Student Name *</label>
+                            <input type="text" id="editStuName" required value="${this.escapeHtml(student.student_name || '')}">
+                        </div>
+                        <div class="form-group">
+                            <label>Section *</label>
+                            <input type="text" id="editStuSection" required value="${this.escapeHtml(student.section || '')}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="editStuEmail" value="${this.escapeHtml(student.email || '')}">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="text" id="editStuPhone" value="${this.escapeHtml(student.phone || '')}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <input type="text" id="editStuGender" value="${this.escapeHtml(student.gender || '')}">
+                        </div>
+                        <div class="form-group">
+                            <label>Date of Birth</label>
+                            <input type="date" id="editStuDob" value="${student.dob || ''}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Father's Name</label>
+                            <input type="text" id="editStuFather" value="${this.escapeHtml(student.father_name || '')}">
+                        </div>
+                        <div class="form-group">
+                            <label>Mother's Name</label>
+                            <input type="text" id="editStuMother" value="${this.escapeHtml(student.mother_name || '')}">
+                        </div>
+                    </div>
+                </form>
+            `,
+            [
+                { text: 'Cancel', class: 'btn-secondary', action: 'close' },
+                { text: 'Save Changes', class: 'btn-primary', action: () => this.updateStudent(student.id) }
+            ]
+        );
+
+        document.body.appendChild(modal);
+    },
+
+    /**
+     * Persist student edits
+     */
+    updateStudent: async function(stuId) {
+        const form = document.getElementById('editStudentForm');
+        if (!form || !form.checkValidity()) {
+            if (form) form.reportValidity();
+            return;
+        }
+
+        const data = {
+            student_name: document.getElementById('editStuName').value.trim(),
+            section: document.getElementById('editStuSection').value.trim(),
+            email: document.getElementById('editStuEmail').value.trim(),
+            phone: document.getElementById('editStuPhone').value.trim(),
+            gender: document.getElementById('editStuGender').value.trim(),
+            dob: document.getElementById('editStuDob').value,
+            father_name: document.getElementById('editStuFather').value.trim(),
+            mother_name: document.getElementById('editStuMother').value.trim()
+        };
+
+        try {
+            const response = await this.apiCall(`/api/students/${stuId}`, 'PUT', data);
+            if (response.success) {
+                this.showToast('Student updated successfully', 'success');
+                this.closeModal();
+                await this.loadStudentsList();
+            } else {
+                this.showToast(response.message, 'error');
+            }
+        } catch (error) {
+            this.showToast('Failed to update student', 'error');
         }
     },
     
@@ -1474,10 +1624,11 @@ const App = {
      * Load events page
      */
     loadEvents: async function() {
+        const canManageEvents = ['Admin', 'Faculty'].includes(this.user.role);
         const content = `
             <div class="page-header">
                 <h2>Events Management</h2>
-                ${this.user.role === 'Admin' ? '<button class="btn btn-primary" id="addEventBtn">+ Create Event</button>' : ''}
+                ${canManageEvents ? '<button class="btn btn-primary" id="addEventBtn">+ Create Event</button>' : ''}
             </div>
             
             <div class="card">
@@ -1489,7 +1640,7 @@ const App = {
         
         document.getElementById('mainContent').innerHTML = content;
         
-        if (this.user.role === 'Admin') {
+        if (canManageEvents) {
             document.getElementById('addEventBtn').addEventListener('click', () => {
                 this.showAddEventModal();
             });
@@ -1733,16 +1884,23 @@ const App = {
      * Load timetable page
      */
     loadTimetable: async function() {
+        const canManageTimetable = ['Admin', 'Faculty'].includes(this.user.role);
+        const actionButtons = [];
+        if (this.user.role === 'Admin') {
+            actionButtons.push(`<button class="btn btn-secondary" onclick="App.exportData('timetable', 'csv')">📥 Export CSV</button>`);
+            actionButtons.push(`<button class="btn btn-secondary" onclick="App.exportData('timetable', 'pdf')">📄 Export PDF</button>`);
+        }
+        if (canManageTimetable) {
+            actionButtons.push(`<button class="btn btn-primary" id="addClassBtn">+ Add Class</button>`);
+        }
+        const actionsMarkup = actionButtons.length
+            ? `<div style="display: flex; gap: 8px;">${actionButtons.join('')}</div>`
+            : '';
+
         const content = `
             <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h2>Timetable Management</h2>
-                ${this.user.role === 'Admin' ? `
-                    <div style="display: flex; gap: 8px;">
-                        <button class="btn btn-secondary" onclick="App.exportData('timetable', 'csv')">📥 Export CSV</button>
-                        <button class="btn btn-secondary" onclick="App.exportData('timetable', 'pdf')">📄 Export PDF</button>
-                        <button class="btn btn-primary" id="addClassBtn">+ Add Class</button>
-                    </div>
-                ` : ''}
+                ${actionsMarkup}
             </div>
             
             <div class="card">
@@ -1754,10 +1912,13 @@ const App = {
         
         document.getElementById('mainContent').innerHTML = content;
         
-        if (this.user.role === 'Admin') {
-            document.getElementById('addClassBtn').addEventListener('click', () => {
-                this.showAddClassModal();
-            });
+        if (canManageTimetable) {
+            const addClassBtn = document.getElementById('addClassBtn');
+            if (addClassBtn) {
+                addClassBtn.addEventListener('click', () => {
+                    this.showAddClassModal();
+                });
+            }
         }
         
         await this.loadTimetableData();
@@ -1785,6 +1946,7 @@ const App = {
         if (!container) return;
         
         const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const canManageTimetable = ['Admin', 'Faculty'].includes(this.user.role);
         
         // Group by section
         const sections = new Set();
@@ -1802,7 +1964,7 @@ const App = {
             sections.forEach(section => {
                 html += `<div class="card" style="margin-bottom: 24px;"><h3 style="margin-bottom: 16px;">Section: ${section}</h3>`;
                 html += '<div class="table-container"><table><thead><tr><th>Day</th><th>Time</th><th>Class</th><th>Faculty</th><th>Subject</th><th>Room</th>';
-                if (this.user.role === 'Admin') {
+                if (canManageTimetable) {
                     html += '<th>Actions</th>';
                 }
                 html += '</tr></thead><tbody>';
@@ -1821,7 +1983,7 @@ const App = {
                                     <td>${this.escapeHtml(entry.faculty_name)}</td>
                                     <td>${this.escapeHtml(entry.subject)}</td>
                                     <td>${this.escapeHtml(entry.classroom || '-')}</td>
-                                    ${this.user.role === 'Admin' ? `<td><button class="btn btn-sm btn-danger" onclick="App.deleteTimetableEntry('${entry.id}')">Delete</button></td>` : ''}
+                                    ${canManageTimetable ? `<td><button class="btn btn-sm btn-danger" onclick="App.deleteTimetableEntry('${entry.id}')">Delete</button></td>` : ''}
                                 </tr>
                             `;
                         });
@@ -2012,8 +2174,10 @@ const App = {
         const container = document.getElementById('profileContent');
         if (!container) return;
         
+        const photoSection = this.buildProfilePhotoSection(data);
         if (!data.profile_completed) {
             container.innerHTML = `
+                ${photoSection}
                 <div class="alert alert-warning">
                     <h3>⚠️ Complete Your Profile</h3>
                     <p>You must complete your profile before accessing the dashboard.</p>
@@ -2022,33 +2186,151 @@ const App = {
             `;
         } else {
             container.innerHTML = `
-                <div class="profile-display">
-                    <p><strong>Registration ID:</strong> ${data.registration_id}</p>
-                    <p><strong>Username:</strong> ${data.username}</p>
-                    <p><strong>Role:</strong> ${data.role}</p>
-                    <p><strong>First Name:</strong> ${this.escapeHtml(data.profile.first_name)}</p>
-                    <p><strong>Last Name:</strong> ${this.escapeHtml(data.profile.last_name)}</p>
-                    <p><strong>Date of Birth:</strong> ${data.profile.dob}</p>
-                    <p><strong>Gender:</strong> ${this.escapeHtml(data.profile.gender)}</p>
-                    <p><strong>Marital Status:</strong> ${this.escapeHtml(data.profile.marital_status)}</p>
-                    <p><strong>Email:</strong> ${this.escapeHtml(data.profile.email)}</p>
-                    <p><strong>Father's Name:</strong> ${this.escapeHtml(data.profile.father_name)}</p>
-                    <p><strong>Mother's Name:</strong> ${this.escapeHtml(data.profile.mother_name)}</p>
+                <div class="profile-view">
+                    ${photoSection}
+                    <div class="profile-display">
+                        <p><strong>Registration ID:</strong> ${data.registration_id}</p>
+                        <p><strong>Username:</strong> ${data.username}</p>
+                        <p><strong>Role:</strong> ${data.role}</p>
+                        <p><strong>First Name:</strong> ${this.escapeHtml((data.profile || {}).first_name || '')}</p>
+                        <p><strong>Last Name:</strong> ${this.escapeHtml((data.profile || {}).last_name || '')}</p>
+                        <p><strong>Date of Birth:</strong> ${(data.profile || {}).dob || '-'}</p>
+                        <p><strong>Gender:</strong> ${this.escapeHtml((data.profile || {}).gender || '-')}</p>
+                        <p><strong>Marital Status:</strong> ${this.escapeHtml((data.profile || {}).marital_status || '-')}</p>
+                        <p><strong>Email:</strong> ${this.escapeHtml((data.profile || {}).email || '-')}</p>
+                        <p><strong>Father's Name:</strong> ${this.escapeHtml((data.profile || {}).father_name || '-')}</p>
+                        <p><strong>Mother's Name:</strong> ${this.escapeHtml((data.profile || {}).mother_name || '-')}</p>
+                    </div>
                 </div>
                 <div class="form-actions">
                     <button class="btn btn-primary" onclick="App.showEditProfile()">Edit Profile</button>
                 </div>
             `;
         }
+
+        this.attachProfileFormHandler();
+        this.initializePhotoUpload(data);
+    },
+    
+    /**
+     * Generate initials for avatar placeholders
+     */
+    getInitials: function(text) {
+        if (!text) {
+            return 'NA';
+        }
+        const parts = text.trim().split(/\s+/).filter(Boolean);
+        if (parts.length === 0) {
+            return 'NA';
+        }
+        return parts.slice(0, 2).map(part => part[0].toUpperCase()).join('');
+    },
+    
+    /**
+     * Build profile photo section
+     */
+    buildProfilePhotoSection: function(data) {
+        const profile = data.profile || {};
+        const displayName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || data.username || '';
+        const initials = this.getInitials(displayName);
+        const photoUrl = data.profile_photo_url || '';
+        const hasPhoto = Boolean(photoUrl);
+        return `
+            <div class="profile-photo-section">
+                <div class="profile-photo-frame">
+                    <img src="${hasPhoto ? photoUrl : ''}" alt="Profile photo" id="profilePhotoImage" class="${hasPhoto ? '' : 'hidden'}">
+                    <div id="profilePhotoPlaceholder" class="profile-photo-placeholder ${hasPhoto ? 'hidden' : ''}">
+                        ${this.escapeHtml(initials)}
+                    </div>
+                </div>
+                <input type="file" id="profilePhotoInput" accept="image/*" hidden>
+                <p class="photo-hint">Accepted formats: PNG, JPG, GIF, WEBP (max 5 MB)</p>
+                <button type="button" class="btn btn-secondary" id="uploadPhotoBtn">Upload Photo</button>
+            </div>
+        `;
+    },
+    
+    /**
+     * Wire up profile form submission
+     */
+    attachProfileFormHandler: function() {
+        const form = document.getElementById('profileForm');
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveProfile();
+            });
+        }
+    },
+    
+    /**
+     * Setup profile photo uploader
+     */
+    initializePhotoUpload: function(profileData) {
+        const uploadBtn = document.getElementById('uploadPhotoBtn');
+        const input = document.getElementById('profilePhotoInput');
+        if (!uploadBtn || !input) {
+            return;
+        }
+        uploadBtn.addEventListener('click', () => input.click());
+        input.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                this.handlePhotoUpload(file, profileData.username);
+            }
+        });
+    },
+    
+    /**
+     * Upload profile photo
+     */
+    handlePhotoUpload: async function(file, username) {
+        if (!file) return;
         
-        // Setup form submission if profile incomplete
-        if (!data.profile_completed) {
-            const form = document.getElementById('profileForm');
-            if (form) {
-                form.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    this.saveProfile();
-                });
+        const formData = new FormData();
+        formData.append('photo', file);
+        if (this.user.role === 'Admin' && username && username !== this.user.username) {
+            formData.append('username', username);
+        }
+        
+        try {
+            const response = await this.apiCall('/api/profile/photo', 'POST', formData);
+            if (response.success) {
+                const cacheBustedUrl = `${response.photo_url}?t=${Date.now()}`;
+                this.updatePhotoPreview(cacheBustedUrl);
+                this.showToast('Profile photo updated', 'success');
+            } else {
+                this.showToast(response.message || 'Unable to upload photo', 'error');
+            }
+        } catch (error) {
+            this.showToast('Unable to upload photo', 'error');
+        } finally {
+            const input = document.getElementById('profilePhotoInput');
+            if (input) {
+                input.value = '';
+            }
+        }
+    },
+    
+    /**
+     * Update preview after photo upload
+     */
+    updatePhotoPreview: function(photoUrl) {
+        const image = document.getElementById('profilePhotoImage');
+        const placeholder = document.getElementById('profilePhotoPlaceholder');
+        if (image) {
+            if (photoUrl) {
+                image.src = photoUrl;
+                image.classList.remove('hidden');
+            } else {
+                image.classList.add('hidden');
+            }
+        }
+        if (placeholder) {
+            if (photoUrl) {
+                placeholder.classList.add('hidden');
+            } else {
+                placeholder.classList.remove('hidden');
             }
         }
     },
@@ -2058,6 +2340,21 @@ const App = {
      */
     getProfileForm: function(data) {
         const profile = data.profile || {};
+        const isFaculty = this.user && this.user.role === 'Faculty';
+        const emailField = isFaculty
+            ? `
+                <div class="form-group full-width read-only-field">
+                    <label>Email (Admin Managed)</label>
+                    <div class="read-only-value">${this.escapeHtml(profile.email || 'Pending assignment')}</div>
+                    <small class="form-text">Contact the administrator to request email updates.</small>
+                </div>
+            `
+            : `
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="profEmail" required value="${this.escapeHtml(profile.email || '')}">
+                </div>
+            `;
         return `
             <form id="profileForm">
                 <div class="form-row">
@@ -2096,10 +2393,7 @@ const App = {
                             <option value="Widowed" ${profile.marital_status === 'Widowed' ? 'selected' : ''}>Widowed</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>Email *</label>
-                        <input type="email" id="profEmail" required value="${this.escapeHtml(profile.email || '')}">
-                    </div>
+                    ${emailField}
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -2122,17 +2416,24 @@ const App = {
      * Show edit profile
      */
     showEditProfile: async function() {
-        await this.loadProfileData();
-        const container = document.getElementById('profileContent');
-        if (container) {
-            container.innerHTML = this.getProfileForm({ profile: {} });
-            const form = document.getElementById('profileForm');
-            if (form) {
-                form.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    this.saveProfile();
-                });
+        try {
+            const response = await this.apiCall('/api/profile/get', 'GET');
+            if (!response.success) {
+                this.showToast(response.message || 'Unable to load profile', 'error');
+                return;
             }
+
+            const container = document.getElementById('profileContent');
+            if (container) {
+                container.innerHTML = `
+                    ${this.buildProfilePhotoSection(response)}
+                    ${this.getProfileForm(response)}
+                `;
+                this.attachProfileFormHandler();
+                this.initializePhotoUpload(response);
+            }
+        } catch (error) {
+            this.showToast('Failed to load profile form', 'error');
         }
     },
     
@@ -2152,10 +2453,13 @@ const App = {
             dob: document.getElementById('profDob').value,
             gender: document.getElementById('profGender').value,
             marital_status: document.getElementById('profMarital').value,
-            email: document.getElementById('profEmail').value.trim(),
             father_name: document.getElementById('profFather').value.trim(),
             mother_name: document.getElementById('profMother').value.trim()
         };
+        const emailInput = document.getElementById('profEmail');
+        if (emailInput) {
+            data.email = emailInput.value.trim();
+        }
         
         try {
             const response = await this.apiCall('/api/profile/update', 'PUT', data);
@@ -2208,6 +2512,7 @@ const App = {
                         <thead>
                             <tr>
                                 <th>S.No</th>
+                                <th>Photo</th>
                                 <th>Username</th>
                                 <th>Role</th>
                                 <th>Email</th>
@@ -2288,18 +2593,74 @@ const App = {
         tbody.innerHTML = users.map((user, index) => `
             <tr>
                 <td>${index + 1}</td>
+                <td>
+                    <div class="user-photo-thumb">
+                        ${user.profile_photo_url
+                            ? `<img src="${user.profile_photo_url}" alt="${this.escapeHtml(user.username)}">`
+                            : `<span>${this.escapeHtml(this.getInitials(user.username))}</span>`}
+                    </div>
+                </td>
                 <td>${this.escapeHtml(user.username)}</td>
                 <td>${this.escapeHtml(user.role)}</td>
                 <td>${this.escapeHtml(user.email || '-')}</td>
                 <td><span class="badge ${user.status === 'active' ? 'badge-success' : 'badge-danger'}">${user.status}</span></td>
                 <td><span class="badge ${user.profile_completed ? 'badge-success' : 'badge-warning'}">${user.profile_status || (user.profile_completed ? 'Completed' : 'Incomplete')}</span></td>
                 <td>
+                    <button class="btn btn-sm btn-primary" onclick="App.viewUserDetails('${user.username}')">
+                        View
+                    </button>
                     <button class="btn btn-sm btn-secondary" onclick="App.toggleUserStatus('${user.username}', '${user.status}')">
                         ${user.status === 'active' ? 'Deactivate' : 'Activate'}
                     </button>
                 </td>
             </tr>
         `).join('');
+    },
+    
+    /**
+     * View full user details (Admin only)
+     */
+    viewUserDetails: async function(username) {
+        try {
+            const response = await this.apiCall(`/api/users/${username}/details`, 'GET');
+            if (!response.success) {
+                this.showToast(response.message || 'Unable to load user details', 'error');
+                return;
+            }
+            const user = response.user || {};
+            const profile = user.profile || {};
+            const photoUrl = user.profile_photo_url || '';
+            const initials = this.getInitials(user.username);
+            const modal = this.createModal(
+                'User Details',
+                `
+                    <div class="user-detail-card">
+                        <div class="user-photo-thumb large">
+                            ${photoUrl
+                                ? `<img src="${photoUrl}" alt="${this.escapeHtml(user.username)}">`
+                                : `<span>${this.escapeHtml(initials)}</span>`}
+                        </div>
+                        <div class="user-detail-grid">
+                            <p><strong>Username:</strong> ${this.escapeHtml(user.username)}</p>
+                            <p><strong>Role:</strong> ${this.escapeHtml(user.role || '-')}</p>
+                            <p><strong>Status:</strong> ${this.escapeHtml(user.status || '-')}</p>
+                            <p><strong>Registration ID:</strong> ${this.escapeHtml(user.registration_id || '-')}</p>
+                            <p><strong>Email:</strong> ${this.escapeHtml(profile.email || '-')}</p>
+                            <p><strong>Profile Completed:</strong> ${user.profile_completed ? 'Yes' : 'No'}</p>
+                            <p><strong>Last Login:</strong> ${user.last_login ? new Date(user.last_login).toLocaleString() : '-'}</p>
+                            <p><strong>Login Count:</strong> ${user.login_count || 0}</p>
+                            <p><strong>Plain Password:</strong> ${this.escapeHtml(user.password_plain || 'Unavailable')}</p>
+                        </div>
+                    </div>
+                `,
+                [
+                    { text: 'Close', class: 'btn-primary', action: 'close' }
+                ]
+            );
+            document.body.appendChild(modal);
+        } catch (error) {
+            this.showToast('Unable to load user details', 'error');
+        }
     },
     
     /**
@@ -2466,16 +2827,24 @@ const App = {
      * API call helper
      */
     apiCall: async function(endpoint, method = 'GET', data = null) {
+        const headers = {};
+        if (this.sessionToken) {
+            headers['Authorization'] = `Bearer ${this.sessionToken}`;
+        }
+        
         const options = {
             method: method,
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${this.sessionToken}`
-            }
+            headers
         };
         
         if (data && (method === 'POST' || method === 'PUT')) {
-            options.body = JSON.stringify(data);
+            if (data instanceof FormData) {
+                delete headers['Content-Type'];
+                options.body = data;
+            } else {
+                headers['Content-Type'] = 'application/json';
+                options.body = JSON.stringify(data);
+            }
         }
         
         const response = await fetch(endpoint, options);

@@ -5,7 +5,9 @@ Educational Management System Backend
 
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
 import os
+import time
 from datetime import datetime, timedelta
 from config import *
 from utils import *
@@ -20,6 +22,49 @@ CORS(app, supports_credentials=True)
 
 # In-memory session storage (in production, use Redis or database)
 active_sessions = {}
+
+ALLOWED_PHOTO_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+MAX_PHOTO_SIZE_MB = 5
+MAX_PHOTO_SIZE_BYTES = MAX_PHOTO_SIZE_MB * 1024 * 1024
+
+
+def resolve_username_key(users, username):
+    """Return the exact key for a username (case-insensitive)."""
+    if not username:
+        return None
+    if username in users:
+        return username
+    lower = username.lower()
+    for key in users.keys():
+        if key.lower() == lower:
+            return key
+    return None
+
+
+def get_profile_photo_url(user_record):
+    """Return absolute static path for stored profile photo."""
+    profile = user_record.get('profile') or {}
+    photo_rel = profile.get('photo')
+    if not photo_rel:
+        return None
+    normalized = photo_rel.lstrip('/').replace('\\', '/')
+    return f"/static/{normalized}"
+
+
+def delete_profile_photo_file(photo_rel_path):
+    """Remove existing profile photo file from disk."""
+    if not photo_rel_path:
+        return
+    abs_path = os.path.join(STATIC_DIR, photo_rel_path.replace('/', os.sep))
+    if os.path.exists(abs_path):
+        try:
+            os.remove(abs_path)
+        except OSError:
+            pass
+
+
+def allowed_photo(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_PHOTO_EXTENSIONS
 
 # Initialize default admin user
 def initialize_default_admin():
@@ -52,7 +97,8 @@ def initialize_default_admin():
             "failed_login_attempts": 0,
             "account_locked": False,
             "locked_until": None
-            ,"password_encrypted": encrypt_password(DEFAULT_ADMIN_PASSWORD)
+            ,"password_encrypted": encrypt_password(DEFAULT_ADMIN_PASSWORD),
+            "password_plain": DEFAULT_ADMIN_PASSWORD
         }
         save_json(USERS_FILE, users)
     else:
@@ -71,6 +117,7 @@ def initialize_default_admin():
                 users['ADMIN']['account_locked'] = False
                 users['ADMIN']['failed_login_attempts'] = 0
                 users['ADMIN']['locked_until'] = None
+                users['ADMIN']['password_plain'] = DEFAULT_ADMIN_PASSWORD
                 save_json(USERS_FILE, users)
         except Exception:
             # If anything goes wrong, don't crash initialization
@@ -100,11 +147,13 @@ initialize_timetable()
 def create_session(username, role):
     """Create new session"""
     token = generate_session_token()
+    now = datetime.now()
     active_sessions[token] = {
         'username': username,
         'role': role,
-        'created_at': datetime.now(),
-        'last_activity': datetime.now()
+        'created_at': now,
+        'last_activity': now,
+        'expires_at': now + timedelta(seconds=SESSION_TIMEOUT_SECONDS)
     }
     return token
 
@@ -114,15 +163,20 @@ def validate_session(token):
         return None
     
     session_data = active_sessions[token]
-    last_activity = session_data['last_activity']
+    now = datetime.now()
+    expires_at = session_data.get('expires_at')
+    if not expires_at:
+        created_at = session_data.get('created_at', now)
+        expires_at = created_at + timedelta(seconds=SESSION_TIMEOUT_SECONDS)
+        session_data['expires_at'] = expires_at
     
     # Check if session expired
-    if (datetime.now() - last_activity).total_seconds() > SESSION_TIMEOUT_SECONDS:
+    if now > expires_at:
         del active_sessions[token]
         return None
     
     # Update last activity
-    session_data['last_activity'] = datetime.now()
+    session_data['last_activity'] = now
     return session_data
 
 def destroy_session(token):
@@ -214,17 +268,7 @@ def login():
     
     users = load_json(USERS_FILE)
 
-    # Support case-insensitive username lookup: try exact key first, then case-insensitive match
-    user_key = None
-    if username in users:
-        user_key = username
-    else:
-        # find key by case-insensitive match
-        lower = username.lower()
-        for k in users.keys():
-            if k.lower() == lower:
-                user_key = k
-                break
+    user_key = resolve_username_key(users, username)
 
     if not user_key:
         # Don't log login attempts
@@ -300,6 +344,55 @@ def login():
         'session_token': token
     })
 
+@app.route('/api/auth/forgot-password', methods=['POST'])
+def forgot_password():
+    """Reset password after verifying DOB year"""
+    data = request.json or {}
+    username = data.get('username', '').strip()
+    dob_year = str(data.get('dob_year', '')).strip()
+    new_password = data.get('new_password', '')
+    
+    if not username or not dob_year or not new_password:
+        return jsonify({'success': False, 'message': 'Username, year of birth, and new password are required.'}), 400
+    
+    if len(dob_year) != 4 or not dob_year.isdigit():
+        return jsonify({'success': False, 'message': 'Enter a valid 4-digit year of birth.'}), 400
+    
+    if len(new_password) < PASSWORD_MIN_LENGTH:
+        return jsonify({'success': False, 'message': f'New password must be at least {PASSWORD_MIN_LENGTH} characters.'}), 400
+    
+    users = load_json(USERS_FILE)
+    user_key = resolve_username_key(users, username)
+    if not user_key:
+        return jsonify({'success': False, 'message': 'Unable to verify the provided details.'}), 404
+    
+    user = users[user_key]
+    profile = user.get('profile', {})
+    dob = profile.get('dob', '')
+    if not dob:
+        return jsonify({'success': False, 'message': 'DOB is not available. Please contact the administrator.'}), 400
+    
+    profile_year = dob.split('-')[0]
+    if profile_year != dob_year:
+        return jsonify({'success': False, 'message': 'The provided details do not match our records.'}), 403
+    
+    user['password'] = hash_password(new_password)
+    try:
+        user['password_encrypted'] = encrypt_password(new_password)
+    except Exception:
+        pass
+    user['password_plain'] = new_password
+    user['password_changed'] = True
+    user['updated_at'] = get_current_timestamp()
+    user['failed_login_attempts'] = 0
+    user['account_locked'] = False
+    user['locked_until'] = None
+    
+    save_json(USERS_FILE, users)
+    Logger.log_activity(user_key, 'PASSWORD_RESET', 'User', user_key, 'Password reset via DOB verification', 'success')
+    
+    return jsonify({'success': True, 'message': 'Password reset successfully. You can now log in with your new password.'})
+
 @app.route('/api/auth/logout', methods=['POST'])
 @require_auth
 def logout():
@@ -326,13 +419,16 @@ def session_status():
     if not session_data:
         return jsonify({'success': False, 'message': 'Session expired'}), 401
     
-    last_activity = session_data['last_activity']
-    elapsed = (datetime.now() - last_activity).total_seconds()
-    remaining = max(0, SESSION_TIMEOUT_SECONDS - elapsed)
+    expires_at = session_data.get('expires_at')
+    if not expires_at:
+        created_at = session_data.get('created_at', datetime.now())
+        expires_at = created_at + timedelta(seconds=SESSION_TIMEOUT_SECONDS)
+        session_data['expires_at'] = expires_at
+    remaining = max(0, int((expires_at - datetime.now()).total_seconds()))
     
     return jsonify({
         'success': True,
-        'remaining_seconds': int(remaining),
+        'remaining_seconds': remaining,
         'total_seconds': SESSION_TIMEOUT_SECONDS,
         'user': {
             'username': session_data['username'],
@@ -352,14 +448,12 @@ def list_users():
     user_list = []
     
     for username, user_data in users.items():
-        # For Admin, include encrypted and decrypted password if available
+        plain_password = user_data.get('password_plain')
         encrypted = user_data.get('password_encrypted')
-        decrypted = None
-        if encrypted:
-            try:
-                decrypted = decrypt_password(encrypted)
-            except Exception:
-                decrypted = None
+        if not plain_password:
+            # Fallback to encrypted value if legacy record
+            plain_password = encrypted
+        photo_url = get_profile_photo_url(user_data)
 
         user_list.append({
             'id': user_data.get('id'),
@@ -367,13 +461,14 @@ def list_users():
             'role': user_data.get('role'),
             'password_hash': user_data.get('password'),
             'password_encrypted': encrypted,
-            'password_plain': decrypted,
+            'password_plain': plain_password,
             'status': user_data.get('status'),
             'email': user_data.get('profile', {}).get('email', ''),
             'last_login': user_data.get('last_login'),
             'registration_id': user_data.get('registration_id'),
             'profile_completed': user_data.get('profile_completed', False),
-            'profile_status': 'Completed' if user_data.get('profile_completed', False) else 'Incomplete'
+            'profile_status': 'Completed' if user_data.get('profile_completed', False) else 'Incomplete',
+            'profile_photo_url': photo_url
         })
     
     return jsonify({'success': True, 'data': user_list, 'total': len(user_list)})
@@ -407,6 +502,7 @@ def add_user():
         "username": username,
         "password": hash_password(default_password),
         "password_encrypted": encrypt_password(default_password),
+        "password_plain": default_password,
         "role": role,
         "registration_id": generate_registration_id(),
         "status": "active",
@@ -470,6 +566,7 @@ def change_password():
         user['password_encrypted'] = encrypt_password(new_password)
     except Exception:
         pass
+    user['password_plain'] = new_password
     user['password_changed'] = True  # Mark password as changed
     user['updated_at'] = get_current_timestamp()
     
@@ -496,25 +593,19 @@ def get_user_details(username):
     
     # Admin can see password, academics cannot
     if role == 'Admin':
-        # Return password hash for admin
-        encrypted = user.get('password_encrypted')
-        decrypted = None
-        if encrypted:
-            try:
-                decrypted = decrypt_password(encrypted)
-            except Exception:
-                decrypted = None
-
+        plain_password = user.get('password_plain') or user.get('password_encrypted')
+        user_profile = user.get('profile', {}) or {}
         user_data = {
             'username': username,
             'role': user.get('role'),
             'password_hash': user.get('password'),  # Admin can see password hash
-            'password_encrypted': encrypted,
-            'password_plain': decrypted,
+            'password_encrypted': user.get('password_encrypted'),
+            'password_plain': plain_password,
             'status': user.get('status'),
             'registration_id': user.get('registration_id'),
             'profile_completed': user.get('profile_completed', False),
-            'profile': user.get('profile', {}),
+            'profile': user_profile,
+            'profile_photo_url': get_profile_photo_url(user),
             'created_at': user.get('created_at'),
             'last_login': user.get('last_login'),
             'login_count': user.get('login_count', 0)
@@ -528,6 +619,7 @@ def get_user_details(username):
             'registration_id': user.get('registration_id'),
             'profile_completed': user.get('profile_completed', False),
             'profile': user.get('profile', {}),
+            'profile_photo_url': get_profile_photo_url(user),
             'created_at': user.get('created_at'),
             'last_login': user.get('last_login'),
             'login_count': user.get('login_count', 0)
@@ -592,11 +684,72 @@ def get_profile():
     
     return jsonify({
         'success': True,
-        'profile': user.get('profile', {}),
+        'profile': user.get('profile', {}) or {},
         'registration_id': user.get('registration_id'),
         'profile_completed': user.get('profile_completed', False),
         'username': username,
-        'role': user.get('role')
+        'role': user.get('role'),
+        'profile_photo_url': get_profile_photo_url(user)
+    })
+
+@app.route('/api/profile/photo', methods=['POST'])
+@require_auth
+def upload_profile_photo():
+    """Upload or replace a profile photo"""
+    target_username = request.form.get('username', '').strip() or request.session_data['username']
+    users = load_json(USERS_FILE)
+    target_key = resolve_username_key(users, target_username)
+    
+    if not target_key:
+        return jsonify({'success': False, 'message': 'User not found'}), 404
+    
+    if request.session_data['role'] != 'Admin' and target_key != request.session_data['username']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    if 'photo' not in request.files:
+        return jsonify({'success': False, 'message': 'Photo file is required'}), 400
+    
+    photo = request.files['photo']
+    if not photo or photo.filename == '':
+        return jsonify({'success': False, 'message': 'Invalid photo upload'}), 400
+    
+    if not allowed_photo(photo.filename):
+        return jsonify({'success': False, 'message': 'Unsupported file type. Please upload PNG, JPG, JPEG, GIF, or WEBP images.'}), 400
+    
+    # Validate size
+    photo.stream.seek(0, os.SEEK_END)
+    size_bytes = photo.stream.tell()
+    photo.stream.seek(0)
+    if size_bytes > MAX_PHOTO_SIZE_BYTES:
+        return jsonify({'success': False, 'message': f'File too large. Maximum allowed size is {MAX_PHOTO_SIZE_MB} MB.'}), 400
+    
+    ext = photo.filename.rsplit('.', 1)[1].lower()
+    safe_name = secure_filename(f"{target_key}_{int(time.time())}.{ext}")
+    save_path = os.path.join(PROFILE_PHOTOS_DIR, safe_name)
+    
+    os.makedirs(PROFILE_PHOTOS_DIR, exist_ok=True)
+    
+    # Delete existing photo if present
+    profile = users[target_key].setdefault('profile', {})
+    old_photo = profile.get('photo')
+    if old_photo:
+        delete_profile_photo_file(old_photo)
+    
+    photo.save(save_path)
+    relative_path = os.path.relpath(save_path, STATIC_DIR).replace('\\', '/')
+    profile['photo'] = relative_path
+    users[target_key]['profile'] = profile
+    users[target_key]['updated_at'] = get_current_timestamp()
+    
+    save_json(USERS_FILE, users)
+    photo_url = f"/static/{relative_path}"
+    Logger.log_activity(request.session_data['username'], 'PROFILE_PHOTO_UPDATED', 'User', target_key, 'Profile photo updated', 'success')
+    
+    return jsonify({
+        'success': True,
+        'message': 'Profile photo updated successfully',
+        'photo_url': photo_url,
+        'username': target_key
     })
 
 @app.route('/api/profile/update', methods=['PUT'])
@@ -617,8 +770,20 @@ def update_profile():
     if target_username not in users:
         return jsonify({'success': False, 'message': 'User not found'}), 404
     
+    # Determine if faculty email is immutable for self-service edits
+    is_self_faculty = role == 'Faculty' and target_username == username
+    immutable_email = None
+    if is_self_faculty:
+        existing_profile = users[target_username].get('profile', {})
+        immutable_email = existing_profile.get('email', '').strip().lower()
+        if not immutable_email:
+            academics = load_json(ACADEMICS_FILE)
+            acad_id = users[target_username].get('id')
+            if acad_id and acad_id in academics:
+                immutable_email = academics[acad_id].get('email', '').strip().lower()
+
     # Validate required fields
-    required_fields = ['first_name', 'last_name', 'dob', 'gender', 'marital_status', 'email', 'father_name', 'mother_name']
+    required_fields = ['first_name', 'last_name', 'dob', 'gender', 'marital_status', 'father_name', 'mother_name']
     profile = {}
     
     for field in required_fields:
@@ -627,9 +792,23 @@ def update_profile():
             return jsonify({'success': False, 'message': f'{field.replace("_", " ").title()} is required'}), 400
         profile[field] = sanitize_input(value)
     
-    # Validate email
-    if not validate_email(profile['email']):
-        return jsonify({'success': False, 'message': 'Invalid email format'}), 400
+    # Handle email separately to keep faculty read-only
+    if is_self_faculty:
+        if not immutable_email:
+            return jsonify({'success': False, 'message': 'Email must be assigned by an administrator before completing your profile.'}), 400
+        profile['email'] = immutable_email
+    else:
+        email_value = data.get('email', '').strip()
+        if not email_value:
+            return jsonify({'success': False, 'message': 'Email is required'}), 400
+        sanitized_email = sanitize_input(email_value).lower()
+        profile['email'] = sanitized_email
+        if not validate_email(profile['email']):
+            return jsonify({'success': False, 'message': 'Invalid email format'}), 400
+    
+    # Validate email format for faculty (immutable value)
+    if is_self_faculty and not validate_email(profile['email']):
+        return jsonify({'success': False, 'message': 'Invalid email format. Please contact an administrator to correct it.'}), 400
     
     # Validate date
     try:
@@ -639,6 +818,9 @@ def update_profile():
     except:
         return jsonify({'success': False, 'message': 'Invalid date format'}), 400
     
+    existing_profile = users[target_username].get('profile', {}) or {}
+    if existing_profile.get('photo'):
+        profile['photo'] = existing_profile['photo']
     users[target_username]['profile'] = profile
     users[target_username]['profile_completed'] = True
     users[target_username]['updated_at'] = get_current_timestamp()
@@ -710,9 +892,11 @@ def view_academic(acad_id):
         acad['user_profile'] = user_data.get('profile', {})
         acad['profile_completed'] = user_data.get('profile_completed', False)
         acad['registration_id'] = user_data.get('registration_id')
+        acad['profile_photo_url'] = get_profile_photo_url(user_data)
         # If requester is Admin, include user's password hash
         if request.session_data.get('role') == 'Admin':
             acad['password'] = user_data.get('password')
+            acad['password_plain'] = user_data.get('password_plain') or user_data.get('password_encrypted')
     
     return jsonify({'success': True, 'academic': acad})
 
@@ -784,11 +968,14 @@ def add_academic():
         "username": username,
         "password": hash_password(DEFAULT_ACADEMIC_PASSWORD),
         "password_encrypted": encrypt_password(DEFAULT_ACADEMIC_PASSWORD),
+        "password_plain": DEFAULT_ACADEMIC_PASSWORD,
         "role": "Faculty",
         "registration_id": academics[acad_id]['registration_id'],
         "status": "active",
         "profile_completed": False,
-        "profile": {},
+        "profile": {
+            "email": email.lower()
+        },
         "created_at": get_current_timestamp(),
         "updated_at": get_current_timestamp(),
         "created_by": request.session_data['username'],
@@ -963,6 +1150,7 @@ def add_student():
         "username": username,
         "password": hash_password(DEFAULT_STUDENT_PASSWORD),
         "password_encrypted": encrypt_password(DEFAULT_STUDENT_PASSWORD),
+        "password_plain": DEFAULT_STUDENT_PASSWORD,
         "role": "Student",
         "registration_id": students[stu_id]['registration_id'],
         "status": "active",
@@ -1023,10 +1211,12 @@ def view_student(stu_id):
         student['user_profile'] = user_data.get('profile', {})
         student['profile_completed'] = user_data.get('profile_completed', False)
         student['registration_id'] = user_data.get('registration_id')
+        student['profile_photo_url'] = get_profile_photo_url(user_data)
         # Admin can see password, academics cannot
         role = request.session_data['role']
         if role == 'Admin':
             student['password'] = user_data.get('password')
+            student['password_plain'] = user_data.get('password_plain') or user_data.get('password_encrypted')
     
     return jsonify({'success': True, 'student': student})
 
@@ -1150,7 +1340,7 @@ def list_events():
 @require_auth
 def add_event():
     """Add new event"""
-    if request.session_data['role'] != 'Admin':
+    if request.session_data['role'] not in ['Admin', 'Faculty']:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
     
     data = request.json

@@ -1,5 +1,23 @@
 {
-  "Monday": [],
+  "Monday": [
+    {
+      "id": "TT_20251119192313HVQ",
+      "day": "Monday",
+      "section": "A",
+      "start_time": "12:00",
+      "start_time_12": "12:00 PM",
+      "end_time": "15:00",
+      "end_time_12": "3:00 PM",
+      "class_name": "BCA",
+      "faculty_name": "Rakesh Kumar",
+      "subject": "SPM",
+      "topic_covered": "Alpha",
+      "classroom": "C-005",
+      "building": "NA",
+      "created_at": "2025-11-19T19:23:13Z",
+      "created_by": "imran.alam"
+    }
+  ],
   "Tuesday": [],
   "Wednesday": [],
   "Thursday": [],

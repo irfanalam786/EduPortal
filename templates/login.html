@@ -29,6 +29,37 @@
                 
                 <button type="submit" class="btn btn-primary btn-block">Login</button>
             </form>
+
+            <div class="forgot-password-container">
+                <button type="button" class="btn-link" id="forgotPasswordToggle">Forgot Password?</button>
+                <div id="forgotPasswordPanel" class="forgot-password-panel" hidden>
+                    <h2>Reset Password</h2>
+                    <p class="forgot-password-subtitle">Enter your username and year of birth to verify your identity.</p>
+                    <form id="forgotPasswordForm">
+                        <div class="form-group">
+                            <label for="fpUsername">Username</label>
+                            <input type="text" id="fpUsername" required placeholder="Enter your username">
+                        </div>
+                        <div class="form-group">
+                            <label for="fpDobYear">Year of Birth (YYYY)</label>
+                            <input type="text" id="fpDobYear" required maxlength="4" placeholder="e.g., 1998" pattern="\d{4}">
+                        </div>
+                        <div class="form-group">
+                            <label for="fpNewPassword">New Password</label>
+                            <input type="password" id="fpNewPassword" required minlength="6" placeholder="Enter new password">
+                        </div>
+                        <div class="form-group">
+                            <label for="fpConfirmPassword">Confirm Password</label>
+                            <input type="password" id="fpConfirmPassword" required minlength="6" placeholder="Re-enter new password">
+                        </div>
+                        <div id="forgotPasswordMessage" class="info-message" style="display: none;"></div>
+                        <div class="forgot-password-actions">
+                            <button type="submit" class="btn btn-primary btn-block">Reset Password</button>
+                            <button type="button" class="btn-link" id="cancelForgotPassword">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
             
             <div class="login-footer">
                 <p><strong>Default Passwords:</strong></p>
@@ -44,6 +75,11 @@
         document.addEventListener('DOMContentLoaded', function() {
             const loginForm = document.getElementById('loginForm');
             const errorMessage = document.getElementById('errorMessage');
+            const forgotPasswordToggle = document.getElementById('forgotPasswordToggle');
+            const forgotPasswordPanel = document.getElementById('forgotPasswordPanel');
+            const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+            const forgotPasswordMessage = document.getElementById('forgotPasswordMessage');
+            const cancelForgotPassword = document.getElementById('cancelForgotPassword');
             
             loginForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -68,6 +104,7 @@
                         // Store session token
                         sessionStorage.setItem('session_token', data.session_token);
                         sessionStorage.setItem('user', JSON.stringify(data.user));
+                        sessionStorage.removeItem('session_remaining_seconds');
                         
                         // First-time login flow
                         // 1. If using default password, force password change
@@ -91,6 +128,68 @@
                     errorMessage.style.display = 'block';
                 }
             });
+
+            if (forgotPasswordToggle && forgotPasswordPanel) {
+                forgotPasswordToggle.addEventListener('click', () => {
+                    forgotPasswordPanel.hidden = !forgotPasswordPanel.hidden;
+                    forgotPasswordMessage.style.display = 'none';
+                });
+            }
+
+            if (cancelForgotPassword && forgotPasswordPanel) {
+                cancelForgotPassword.addEventListener('click', () => {
+                    forgotPasswordPanel.hidden = true;
+                    forgotPasswordForm.reset();
+                    forgotPasswordMessage.style.display = 'none';
+                });
+            }
+
+            if (forgotPasswordForm) {
+                forgotPasswordForm.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    const username = document.getElementById('fpUsername').value.trim();
+                    const dobYear = document.getElementById('fpDobYear').value.trim();
+                    const newPassword = document.getElementById('fpNewPassword').value;
+                    const confirmPassword = document.getElementById('fpConfirmPassword').value;
+
+                    forgotPasswordMessage.className = 'info-message';
+                    forgotPasswordMessage.style.display = 'none';
+
+                    if (newPassword !== confirmPassword) {
+                        forgotPasswordMessage.textContent = 'Passwords do not match.';
+                        forgotPasswordMessage.className = 'info-message error';
+                        forgotPasswordMessage.style.display = 'block';
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch('/api/auth/forgot-password', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                username,
+                                dob_year: dobYear,
+                                new_password: newPassword
+                            })
+                        });
+
+                        const data = await response.json();
+                        forgotPasswordMessage.textContent = data.message || (data.success ? 'Password reset successfully.' : 'Unable to reset password.');
+                        forgotPasswordMessage.className = data.success ? 'info-message success' : 'info-message error';
+                        forgotPasswordMessage.style.display = 'block';
+
+                        if (data.success) {
+                            forgotPasswordForm.reset();
+                        }
+                    } catch (err) {
+                        forgotPasswordMessage.textContent = 'Unable to reset password right now. Please try again.';
+                        forgotPasswordMessage.className = 'info-message error';
+                        forgotPasswordMessage.style.display = 'block';
+                    }
+                });
+            }
         });
     </script>
 </body>
