@@ -11,6 +11,7 @@ EduPortal is a Flask-based educational management system that consolidates day-t
 - Event registration with capacity tracking and student auto-fill
 - JSON data backup-on-write and activity audit trail capped at `MAX_ACTIVITY_LOGS`
 - DOB-verified self-service password resets, profile photo uploads, and admin visibility into plaintext credentials and avatar gallery
+- Password snapshot ledger that records plaintext + SHA256 hashes to `backend/data/decrypt.json` whenever credentials change
 - CLI tooling to regenerate full documentation (`create_documentation.py`)
 
 ## Tech Stack
@@ -102,6 +103,7 @@ All primary entities live in `backend/data/*.json`. Each save creates `<file>.ba
 | `events.json`     | Campus events, capacity, registrations                 |
 | `timetable.json`  | Day-by-day schedules grouped by section                |
 | `activities.json` | Audit/history entries from `Logger`                    |
+| `decrypt.json`    | Append-only ledger of password events storing plaintext and SHA256 hash pairs alongside timestamps/source |
 
 Backups: copy `<name>.json.backup` back over the original to restore.
 
@@ -139,6 +141,7 @@ Each protected route uses the `@require_auth` decorator (`app.py`) to validate B
 
 ## Security & Resilience
 - SHA-256 password hashing plus encrypted copy for admin viewing (`utils.hash_password/encrypt_password`)
+- Dedicated `decrypt.json` ledger automatically captures each password mutation (user creation, reset, change) with plaintext + hash to support audit requirements; file is created on-demand if absent
 - Forced password change tracking via `user['password_changed']`
 - In-memory session store with fixed idle expiry (page refreshes no longer reset the timer), manual destruction at logout, and global `/api/auth/session-status`
 - Lockout after `MAX_LOGIN_ATTEMPTS` with `LOCKOUT_DURATION_MINUTES` cool-down
@@ -164,6 +167,7 @@ Each protected route uses the `@require_auth` decorator (`app.py`) to validate B
 
 ## Documentation Assets
 - `EduPortal_Complete_Documentation.docx`: high-level manual generated via `python create_documentation.py`.
+- `PASSWORD_LEDGER.md`: explains how `backend/data/decrypt.json` captures plaintext + SHA256 pairs for auditing.
 - README (this file): operational quickstart + API primer; update alongside backend changes.
 - Optionally export CSVs via `/api/export/<type>?format=csv` for external reporting packs.
 

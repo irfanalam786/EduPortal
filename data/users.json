@@ -3,6 +3,7 @@
     "id": "ADMIN",
     "username": "ADMIN",
     "password": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+    "password_encrypted": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
     "role": "Admin",
     "registration_id": "REG-20251111100048-4WTH",
     "status": "active",
@@ -19,14 +20,15 @@
       "photo": "images/profiles/ADMIN_1763563647.jpg"
     },
     "created_at": "2025-11-11T10:00:48Z",
-    "updated_at": "2025-11-19T20:17:27Z",
-    "last_login": "2025-11-19T20:16:58Z",
-    "login_count": 50,
+    "updated_at": "2025-11-20T16:44:30Z",
+    "last_login": "2025-11-20T16:54:39Z",
+    "login_count": 52,
     "failed_login_attempts": 0,
     "account_locked": false,
     "locked_until": null,
     "theme": "dark",
-    "password_changed": false
+    "password_changed": true,
+    "password_plain": "admin123"
   },
   "imran.alam": {
     "id": "ACM_20251119185634FZO",
@@ -39,14 +41,15 @@
     "profile_completed": false,
     "profile": {},
     "created_at": "2025-11-19T18:56:34Z",
-    "updated_at": "2025-11-19T18:57:20Z",
+    "updated_at": "2025-11-20T16:58:13Z",
     "created_by": "ADMIN",
-    "last_login": "2025-11-19T20:18:26Z",
-    "login_count": 3,
+    "last_login": "2025-11-20T16:55:06Z",
+    "login_count": 4,
     "failed_login_attempts": 0,
     "account_locked": false,
     "locked_until": null,
-    "password_changed": false,
-    "theme": "dark"
+    "password_changed": true,
+    "theme": "dark",
+    "password_plain": "acad123"
   }
 }

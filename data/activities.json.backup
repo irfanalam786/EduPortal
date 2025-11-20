@@ -251,5 +251,126 @@
     "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
     "status": "error",
     "details": {}
+  },
+  {
+    "id": "ACT_000024",
+    "timestamp": "2025-11-19T20:18:36Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000025",
+    "timestamp": "2025-11-20T16:43:41Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000026",
+    "timestamp": "2025-11-20T16:43:53Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000027",
+    "timestamp": "2025-11-20T16:44:30Z",
+    "user": "ADMIN",
+    "action": "PASSWORD_CHANGED",
+    "entity_type": "User",
+    "entity_id": "ADMIN",
+    "description": "Password changed",
+    "status": "success",
+    "details": {}
+  },
+  {
+    "id": "ACT_000028",
+    "timestamp": "2025-11-20T16:45:27Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000029",
+    "timestamp": "2025-11-20T16:54:39Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000030",
+    "timestamp": "2025-11-20T16:54:53Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000031",
+    "timestamp": "2025-11-20T16:55:06Z",
+    "user": "SYSTEM",
+    "action": "ERROR_EXCEPTION",
+    "entity_type": "System",
+    "entity_id": null,
+    "description": "Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+    "status": "error",
+    "details": {}
+  },
+  {
+    "id": "ACT_000032",
+    "timestamp": "2025-11-20T16:55:22Z",
+    "user": "imran.alam",
+    "action": "PASSWORD_CHANGED",
+    "entity_type": "User",
+    "entity_id": "imran.alam",
+    "description": "Password changed",
+    "status": "success",
+    "details": {}
+  },
+  {
+    "id": "ACT_000033",
+    "timestamp": "2025-11-20T16:56:50Z",
+    "user": "imran.alam",
+    "action": "PASSWORD_CHANGED",
+    "entity_type": "User",
+    "entity_id": "imran.alam",
+    "description": "Password changed",
+    "status": "success",
+    "details": {}
+  },
+  {
+    "id": "ACT_000034",
+    "timestamp": "2025-11-20T16:57:51Z",
+    "user": "imran.alam",
+    "action": "PASSWORD_CHANGED",
+    "entity_type": "User",
+    "entity_id": "imran.alam",
+    "description": "Password changed",
+    "status": "success",
+    "details": {}
   }
 ]
